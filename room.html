@@ -786,22 +786,163 @@ const blob = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, o
 for (const [x, y, z, s] of [[16.6, OTOP, -1.3, 2.6], [13.5, OTOP, 3.2, 1.4], [8.8, OG, 1.2, 1.4]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(s, s * 0.8), blob); m.rotation.x = -Math.PI / 2; m.position.set(x + 0.25, y + 0.01, z + 0.2); outdoor.add(m); }
 
 /* ================= The rare bomb plant (1 in 10,000 per second; #bomb in the URL forces it) ================= */
-function makeT() {
-  const g = new THREE.Group(), cloth = baked(T.tcloth), pants = baked(T.tpants), mask = baked(T.tmask);
-  const legs = [], arms = [];
-  for (const sx of [-0.12, 0.12]) { const p = new THREE.Group(); p.position.set(sx, 0.9, 0); g.add(p); obox(0.17, 0.9, 0.2, null, 0, -0.9, 0, { mats: pants, parent: p, ts: 1 }); legs.push(p); }
-  obox(0.5, 0.66, 0.28, null, 0, 0.9, 0, { mats: cloth, parent: g, ts: 1 });
-  obox(0.26, 0.28, 0.26, null, 0, 1.58, 0, { mats: mask, parent: g, ts: 1 });
-  for (const sx of [-0.33, 0.33]) { const p = new THREE.Group(); p.position.set(sx, 1.5, 0); g.add(p); obox(0.14, 0.6, 0.16, null, 0, -0.6, 0, { mats: cloth, parent: p, ts: 1 }); arms.push(p); }
-  obox(0.07, 0.1, 0.8, null, 0.12, 1.15, 0.35, { mats: mask, parent: g, ts: 1 }); // rifle
-  g.userData = { legs, arms, phase: Math.random() * 6 };
-  outdoor.add(g); return g;
+/* ---- Terrorist character: jointed low-poly rig (original model, late-90s game style) ----
+   Forward is local +z, the character's right is -x. Limbs hang along -y from their pivots, so a
+   negative x-rotation swings a limb forward and a positive knee rotation bends the shin back. */
+T.tJacket = canvasTex(16, 16, (x, w, h, r) => {
+  x.fillStyle = "#64742d"; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 6; i++) { x.fillStyle = `rgba(30,40,10,${0.18 + r() * 0.2})`; x.fillRect(0, r() * h | 0, w, 1); }
+  grain(x, w, h, r, 14);
+}, 161);
+T.tChest = canvasTex(32, 32, (x, w, h, r) => {
+  x.fillStyle = "#64742d"; x.fillRect(0, 0, w, h);
+  x.fillStyle = "#8b8a76"; x.beginPath(); x.moveTo(11, 0); x.lineTo(21, 0); x.lineTo(16, 8); x.fill();            // shirt in the V
+  x.fillStyle = "#4b5820"; x.beginPath(); x.moveTo(6, 0); x.lineTo(12, 0); x.lineTo(16, 9); x.lineTo(13, 10); x.fill();
+  x.beginPath(); x.moveTo(26, 0); x.lineTo(20, 0); x.lineTo(16, 9); x.lineTo(19, 10); x.fill();                      // collar
+  x.fillStyle = "#363f15"; x.fillRect(15, 8, 2, 22);                                                                 // zip
+  x.fillStyle = "#56651f"; x.fillRect(4, 12, 8, 6); x.fillRect(20, 12, 8, 6);                                         // pockets
+  x.fillStyle = "#3d4717"; x.fillRect(4, 12, 8, 1); x.fillRect(20, 12, 8, 1);
+  for (let i = 0; i < 5; i++) { x.fillStyle = "rgba(30,40,10,.25)"; x.fillRect(2 + r() * 28 | 0, 20 + r() * 10 | 0, 5, 1); }
+  grain(x, w, h, r, 12);
+}, 163, false);
+T.tPants = canvasTex(16, 16, (x, w, h, r) => {
+  x.fillStyle = "#8a7d48"; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 4; i++) { x.fillStyle = `rgba(60,50,20,${0.2 + r() * 0.2})`; x.fillRect(0, r() * h | 0, w, 1); }
+  grain(x, w, h, r, 14);
+}, 167);
+T.tBelt = canvasTex(16, 4, (x, w, h, r) => { x.fillStyle = "#3e2a18"; x.fillRect(0, 0, w, h); x.fillStyle = "#b39a52"; x.fillRect(7, 1, 2, 2); }, 169, false);
+T.tBoot = canvasTex(16, 16, (x, w, h, r) => { x.fillStyle = "#4c321d"; x.fillRect(0, 0, w, h); x.fillStyle = "#2c1d10"; x.fillRect(0, h - 3, w, 3); grain(x, w, h, r, 12); }, 173);
+T.tSkin = canvasTex(16, 16, (x, w, h, r) => { x.fillStyle = "#a88b63"; x.fillRect(0, 0, w, h); grain(x, w, h, r, 8); }, 179);
+T.tFace = canvasTex(32, 32, (x, w, h, r) => {
+  x.fillStyle = "#a88b63"; x.fillRect(0, 0, w, h);
+  x.fillStyle = "#18171a"; x.fillRect(0, 0, w, 6); x.fillRect(0, 6, 3, 6); x.fillRect(29, 6, 3, 6);                  // hairline
+  x.fillStyle = "#2a2622"; x.fillRect(6, 10, 8, 1); x.fillRect(18, 10, 8, 1);                                         // brows
+  x.fillStyle = "#222"; x.fillRect(4, 12, 24, 6);                                                                      // shades frame
+  x.fillStyle = "#f0f0e6"; x.fillRect(5, 13, 9, 4); x.fillRect(18, 13, 9, 4);                                         // white lenses
+  x.fillStyle = "#c9c9bd"; x.fillRect(5, 16, 9, 1); x.fillRect(18, 16, 9, 1);
+  x.fillStyle = "rgba(70,50,30,.45)"; x.fillRect(15, 18, 2, 4);                                                        // nose shade
+  x.fillStyle = "#5a3d2a"; x.fillRect(11, 25, 10, 1);                                                                  // mouth
+  x.fillStyle = "rgba(60,45,25,.25)"; x.fillRect(8, 27, 16, 3);                                                        // jaw shadow
+  grain(x, w, h, r, 8);
+}, 181, false);
+T.tHair = canvasTex(16, 16, (x, w, h, r) => { x.fillStyle = "#161517"; x.fillRect(0, 0, w, h); for (let i = 0; i < 5; i++) { x.fillStyle = "rgba(255,255,255,.07)"; x.fillRect(0, r() * h | 0, w, 1); } }, 191);
+T.tGlove = canvasTex(8, 8, (x, w, h, r) => { x.fillStyle = "#3a3934"; x.fillRect(0, 0, w, h); grain(x, w, h, r, 10); }, 193);
+T.tGun = canvasTex(8, 8, (x, w, h, r) => { x.fillStyle = "#262626"; x.fillRect(0, 0, w, h); grain(x, w, h, r, 10); }, 197);
+T.tWood = canvasTex(16, 8, (x, w, h, r) => { x.fillStyle = "#6a4122"; x.fillRect(0, 0, w, h); for (let i = 0; i < 4; i++) { x.fillStyle = "rgba(40,20,8,.35)"; x.fillRect(0, r() * h | 0, w, 1); } }, 199);
+T.tHolster = canvasTex(8, 8, (x, w, h, r) => { x.fillStyle = "#4a3320"; x.fillRect(0, 0, w, h); grain(x, w, h, r, 10); }, 211);
+
+// Flat shading by local face (front lit, back darker), like old software-lit models.
+const T_TINT = [0.8, 0.8, 1.0, 0.5, 1.0, 0.64];
+const tMatCache = new Map();
+function tMats(tex, front) {
+  const key = tex.uuid + (front ? front.uuid : "");
+  if (!tMatCache.has(key)) tMatCache.set(key, T_TINT.map((b, i) => new THREE.MeshBasicMaterial({ map: i === 4 && front ? front : tex, color: new THREE.Color(b, b, b) })));
+  return tMatCache.get(key);
 }
-function animT(t, moving, dt, crouch) {
-  const u = t.userData; if (moving) u.phase += dt * 11;
-  const sw = moving ? Math.sin(u.phase) * 0.75 : 0;
-  u.legs[0].rotation.x = crouch ? -1.3 : sw; u.legs[1].rotation.x = crouch ? -0.2 : -sw;
-  u.arms[0].rotation.x = -sw * 0.6 - 0.5; u.arms[1].rotation.x = sw * 0.6 - 0.9;
+function tPart(w, h, d, mats, x, y, z, parent) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats); m.position.set(x, y, z); parent.add(m); return m; }
+function tPivot(parent, x, y, z) { const p = new THREE.Group(); p.position.set(x, y, z); parent.add(p); return p; }
+const HIP_Y = 0.97;
+function makeT() {
+  const jacket = tMats(T.tJacket), chest = tMats(T.tJacket, T.tChest), pants = tMats(T.tPants), boot = tMats(T.tBoot);
+  const skin = tMats(T.tSkin), head = tMats(T.tSkin, T.tFace), hair = tMats(T.tHair), glove = tMats(T.tGlove);
+  const gun = tMats(T.tGun), wood = tMats(T.tWood), belt = tMats(T.tBelt), holster = tMats(T.tHolster);
+  const root = new THREE.Group();
+  const J = { sh: [], el: [], hip: [], knee: [], ank: [] };
+  J.pelvis = tPivot(root, 0, HIP_Y, 0);
+  tPart(0.36, 0.17, 0.22, pants, 0, -0.02, 0, J.pelvis);
+  tPart(0.375, 0.05, 0.235, belt, 0, 0.07, 0, J.pelvis);
+  J.torso = tPivot(J.pelvis, 0, 0.09, 0);
+  tPart(0.44, 0.56, 0.25, chest, 0, 0.29, 0, J.torso);
+  tPart(0.46, 0.1, 0.27, jacket, 0, 0.52, 0, J.torso);                 // shoulders / upper back
+  tPart(0.11, 0.07, 0.11, skin, 0, 0.6, 0, J.torso);                   // neck
+  J.head = tPivot(J.torso, 0, 0.63, 0.01);
+  tPart(0.22, 0.25, 0.23, head, 0, 0.125, 0, J.head);
+  tPart(0.235, 0.06, 0.245, hair, 0, 0.265, -0.005, J.head);           // slicked top
+  tPart(0.235, 0.17, 0.05, hair, 0, 0.17, -0.11, J.head);              // back of the head
+  tPart(0.21, 0.05, 0.02, tMats(T.white), 0, 0.15, 0.12, J.head);      // shades stand proud of the face
+  for (const s of [1, -1]) {                                           // s = 1 left (+x), -1 right (-x)
+    const sh = tPivot(J.torso, s * 0.275, 0.52, 0);
+    tPart(0.13, 0.31, 0.14, jacket, 0, -0.15, 0, sh);
+    const el = tPivot(sh, 0, -0.3, 0);
+    tPart(0.115, 0.27, 0.12, jacket, 0, -0.13, 0, el);
+    tPart(0.09, 0.1, 0.11, glove, 0, -0.31, 0.01, el);
+    J.sh.push(sh); J.el.push(el);
+    const hip = tPivot(J.pelvis, s * 0.1, -0.03, 0);
+    tPart(0.155, 0.46, 0.17, pants, 0, -0.23, 0, hip);
+    if (s === -1) { tPart(0.06, 0.2, 0.11, holster, -0.1, -0.2, 0.01, hip); tPart(0.18, 0.03, 0.18, holster, 0, -0.26, 0, hip); }
+    const knee = tPivot(hip, 0, -0.46, 0);
+    tPart(0.135, 0.42, 0.145, pants, 0, -0.21, 0, knee);
+    const ank = tPivot(knee, 0, -0.43, 0);
+    tPart(0.145, 0.15, 0.16, boot, 0, 0.0, 0, ank);
+    tPart(0.13, 0.08, 0.27, boot, 0, -0.04, 0.055, ank);
+    J.hip.push(hip); J.knee.push(knee); J.ank.push(ank);
+  }
+  // Rifle carried at the right hip/chest, held with both hands.
+  const rifle = tPivot(J.torso, -0.06, 0.27, 0.3);
+  tPart(0.06, 0.09, 0.36, gun, 0, 0, 0.04, rifle);
+  tPart(0.065, 0.06, 0.17, wood, 0, -0.005, 0.28, rifle);
+  tPart(0.024, 0.024, 0.3, gun, 0, 0.02, 0.48, rifle);
+  tPart(0.02, 0.05, 0.02, gun, 0, 0.055, 0.6, rifle);
+  tPart(0.055, 0.11, 0.26, wood, 0, -0.03, -0.25, rifle);
+  const mag = tPart(0.045, 0.17, 0.06, gun, 0, -0.11, 0.12, rifle); mag.rotation.x = 0.35;
+  tPart(0.04, 0.09, 0.05, wood, 0, -0.08, -0.04, rifle);               // pistol grip
+  const c4hand = tPivot(J.torso, 0, 0.0, 0.5); c4hand.visible = false;
+  tPart(0.32, 0.11, 0.22, tMats(T.tpants), 0, 0, 0, c4hand);
+  { const led = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.05), new THREE.MeshBasicMaterial({ color: 0xd01a10 })); led.position.set(0.08, 0.07, 0); c4hand.add(led); }
+  root.userData = { J, rifle, c4hand, phase: Math.random() * 6, t: 0, yaw: 0, targetYaw: null, air: false, speed: 4.4, cur: null };
+  outdoor.add(root);
+  return root;
+}
+// Two-hand rifle hold: the right hand on the grip, the left under the handguard. Values are [x, z] rotations.
+const AIM = { shR: [-0.4, 0.38], elR: -1.15, shL: [-0.95, -0.6], elL: -0.6 };
+function tTargets(u, state) {
+  const t = u.t, ph = u.phase;
+  const P = { pelY: HIP_Y, pelYaw: 0, lean: 0.05, torsoYaw: 0, headX: -0.05, headYaw: 0, hipX: [0, 0], hipZ: [0.02, -0.02], knee: [0.08, 0.08], ank: [-0.04, -0.04],
+    shX: [AIM.shL[0], AIM.shR[0]], shZ: [AIM.shL[1], AIM.shR[1]], el: [AIM.elL, AIM.elR] };
+  if (state === "run") {
+    const s = Math.sin(ph), c = Math.cos(ph);
+    // Knee flexion peaks a little after the thigh passes vertical, so the knee lifts forward on the swing.
+    const ck = Math.cos(ph - 0.55);
+    P.hipX = [-0.76 * s - 0.1, 0.76 * s - 0.1];
+    P.knee = [0.12 + 1.15 * Math.pow(Math.max(0, ck), 1.3), 0.12 + 1.15 * Math.pow(Math.max(0, -ck), 1.3)];
+    P.ank = [-(P.hipX[0] + P.knee[0]) * 0.55 + 0.1, -(P.hipX[1] + P.knee[1]) * 0.55 + 0.1];
+    P.pelY = HIP_Y - 0.03 - 0.035 * Math.cos(2 * ph);
+    P.pelYaw = 0.13 * s; P.torsoYaw = -0.16 * s; P.lean = 0.16; P.headX = -0.14;
+    P.shX = [AIM.shL[0] + 0.05 * Math.sin(2 * ph), AIM.shR[0] + 0.05 * Math.sin(2 * ph)];
+  } else if (state === "jump") {
+    P.hipX = [-0.95, -0.55]; P.knee = [1.35, 1.05]; P.ank = [-0.35, -0.3]; P.lean = 0.22; P.headX = -0.15;
+  } else if (state === "guard") {
+    P.hipZ = [0.13, -0.13]; P.knee = [0.22, 0.22]; P.ank = [-0.1, -0.1]; P.pelY = HIP_Y - 0.05;
+    P.torsoYaw = 0.55 * Math.sin(t * 0.9); P.headYaw = 0.25 * Math.sin(t * 0.9 + 0.6); P.lean = 0.08 + 0.015 * Math.sin(t * 2.1);
+  } else if (state === "plant") {
+    P.pelY = 0.5; P.hipX = [-1.65, -1.25]; P.hipZ = [0.18, -0.1]; P.knee = [2.25, 1.75]; P.ank = [-0.6, -0.5];
+    P.lean = 0.7; P.headX = -0.35;
+    const tap = Math.max(0, Math.sin(t * 13));
+    P.shX = [-1.05, -1.0 - 0.12 * tap]; P.shZ = [-0.2, 0.2]; P.el = [-0.35, -0.45 - 0.25 * tap];
+  } else { // stand
+    P.lean = 0.06 + 0.012 * Math.sin(t * 2.2);
+  }
+  return P;
+}
+function poseT(tt, state, dt) {
+  const u = tt.userData, J = u.J;
+  u.t += dt;
+  if (state === "run") u.phase += dt * u.speed * Math.PI * 2 / 2.6;
+  if (u.targetYaw != null) { let d = u.targetYaw - u.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); u.yaw += d * (1 - Math.exp(-dt * 14)); tt.rotation.y = u.yaw; }
+  const P = tTargets(u, state);
+  // Each joint eases toward its target, so the character blends between run, jump, crouch and idle.
+  const k = 1 - Math.exp(-dt * (state === "run" ? 22 : 10));
+  if (!u.cur) u.cur = JSON.parse(JSON.stringify(P));
+  const C = u.cur;
+  const mix = (a, b) => a + (b - a) * k;
+  for (const key of Object.keys(P)) { if (Array.isArray(P[key])) C[key] = C[key].map((v, i) => mix(v, P[key][i])); else C[key] = mix(C[key], P[key]); }
+  J.pelvis.position.y = C.pelY; J.pelvis.rotation.y = C.pelYaw;
+  J.torso.rotation.set(C.lean, C.torsoYaw - C.pelYaw * 0.5, 0);
+  J.head.rotation.set(C.headX, C.headYaw, 0);
+  for (let i = 0; i < 2; i++) {
+    J.hip[i].rotation.set(C.hipX[i], 0, C.hipZ[i]); J.knee[i].rotation.x = C.knee[i]; J.ank[i].rotation.x = C.ank[i];
+    J.sh[i].rotation.set(C.shX[i], 0, C.shZ[i]); J.el[i].rotation.x = C.el[i];
+  }
 }
 const BOMB_PATH = [[10.5, OG, -10.6], [10.6, OG, -8.5], [11.2, OG, -2.6], [12.6, OTOP, -2.3], [14.9, OTOP, 0.1]];
 let bomb = null;
@@ -818,10 +959,11 @@ function walkAlong(t, i, path, dt, speed) {
   const a = path[s[i]], b = path[s[i] + 1], tgt = V3(b[0] - i * 0.7, b[1], b[2] - i * 0.8);
   const d = tgt.clone().sub(t.position), flat = Math.hypot(d.x, d.z);
   const step = speed * dt;
-  if (flat <= step) { t.position.copy(tgt); s[i]++; return s[i] >= path.length - 1; }
+  t.userData.air = b[1] !== a[1];
+  if (flat <= step) { t.position.copy(tgt); s[i]++; t.userData.air = false; return s[i] >= path.length - 1; }
   t.position.x += d.x / flat * step; t.position.z += d.z / flat * step;
   if (b[1] !== a[1]) { const total = Math.hypot(b[0] - a[0], b[2] - a[2]), done = 1 - flat / total; t.position.y = a[1] + (b[1] - a[1]) * Math.min(1, done * 1.4) + Math.sin(Math.min(1, done) * Math.PI) * 0.5; }
-  t.rotation.y = Math.atan2(d.x, d.z);
+  t.userData.targetYaw = Math.atan2(d.x, d.z);
   return false;
 }
 function makeC4() {
@@ -871,18 +1013,23 @@ function updateBomb(now, dt) {
   const t = (now - bomb.t0) / 1000;
   if (bomb.phase === "enter") {
     let done = true;
-    bomb.ts.forEach((tt, i) => { const arrived = walkAlong(tt, i, BOMB_PATH, dt, 3.6); animT(tt, !arrived, dt, false); done = done && arrived; });
-    if (done) { bomb.phase = "plant"; bomb.plantT = now; bomb.ts[0].position.y -= 0.32; sfxBomb.key(); bomb.ts[1].rotation.y = Math.PI / 2 + 0.6; }
+    bomb.ts.forEach((tt, i) => { const arrived = walkAlong(tt, i, BOMB_PATH, dt, 4.4); poseT(tt, arrived ? "stand" : tt.userData.air ? "jump" : "run", dt); done = done && arrived; });
+    if (done) {
+      bomb.phase = "plant"; bomb.plantT = now; sfxBomb.key();
+      const p = bomb.ts[0].userData; p.rifle.visible = false; p.c4hand.visible = true; p.targetYaw = Math.PI / 2 + 0.25; // face the crates
+      bomb.ts[1].userData.targetYaw = -Math.PI / 2 + 0.4;                                                              // cover the doorway side
+    }
   } else if (bomb.phase === "plant") {
-    animT(bomb.ts[0], false, dt, true); animT(bomb.ts[1], false, dt, false);
+    poseT(bomb.ts[0], "plant", dt); poseT(bomb.ts[1], "guard", dt);
     if (now - bomb.plantT > 3200) {
-      bomb.ts[0].position.y += 0.32; bomb.c4 = makeC4(); bomb.planted = now; bomb.phase = "leave"; bomb.seg = [0, 0];
+      const p = bomb.ts[0].userData; p.rifle.visible = true; p.c4hand.visible = false;
+      bomb.c4 = makeC4(); bomb.planted = now; bomb.phase = "leave"; bomb.seg = [0, 0];
       centerMsg("The bomb has been planted.", 3500); sfxBomb.beep();
     }
   } else if (bomb.phase === "leave") {
     const back = BOMB_PATH.slice().reverse();
     let gone = true;
-    bomb.ts.forEach((tt, i) => { if (!tt.parent) return; const arrived = walkAlong(tt, i, back, dt, 4.2); animT(tt, !arrived, dt, false); if (arrived) outdoor.remove(tt); else gone = false; });
+    bomb.ts.forEach((tt, i) => { if (!tt.parent) return; const arrived = walkAlong(tt, i, back, dt, 4.6); poseT(tt, tt.userData.air ? "jump" : "run", dt); if (arrived) outdoor.remove(tt); else gone = false; });
     if (gone) bomb.phase = "ticking";
   }
   if (bomb.c4) {
