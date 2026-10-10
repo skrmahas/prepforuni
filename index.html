@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Spaced-repetition maths and physics drill for the TU Delft Aerospace Engineering BSc selection exam.">
+<title>Delft AE Drill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%} body{margin:0} img{max-width:100%} [hidden]{display:none!important}
+/* Layout: a flight-strip board. Decks are strips (code box, name, counts), study is one card on a calm field. */
+:root {
+  --paper: #F2F4F7;
+  --surface: #FFFFFF;
+  --ink: #132031;
+  --muted: #5B6A7B;
+  --line: #D5DCE4;
+  --accent: #1C5ED0;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E4ECFA;
+  --amber: #A86B12;
+  --amber-soft: #FBF0DD;
+  --good: #23784A;
+  --good-soft: #E3F3EA;
+  --bad: #BF3A33;
+  --bad-soft: #FBE7E5;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0D131A; --surface: #151F29; --ink: #E5ECF3; --muted: #93A2B3; --line: #273544;
+    --accent: #6EA2FF; --accent-ink: #0D131A; --accent-soft: #1A2B44;
+    --amber: #E3A64B; --amber-soft: #352914; --good: #5BC38A; --good-soft: #15301F; --bad: #F27C73; --bad-soft: #3A1B19;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0D131A; --surface: #151F29; --ink: #E5ECF3; --muted: #93A2B3; --line: #273544;
+  --accent: #6EA2FF; --accent-ink: #0D131A; --accent-soft: #1A2B44;
+  --amber: #E3A64B; --amber-soft: #352914; --good: #5BC38A; --good-soft: #15301F; --bad: #F27C73; --bad-soft: #3A1B19;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--paper); color: var(--ink); }
+body { font: 15px/1.55 var(--font-body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 0 48px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Header */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1040px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 12px 20px; align-items: center; flex-wrap: wrap; }
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: .06em; text-transform: uppercase; line-height: 1; }
+.brand small { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 10.5px; letter-spacing: .08em; color: var(--muted); margin-top: 4px; text-transform: none; }
+.tabs { display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; }
+.tab { border: 0; background: none; padding: 7px 12px; border-radius: var(--r); font-weight: 500; color: var(--muted); }
+.tab[aria-current="page"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+.tab:hover { color: var(--ink); }
+.sync { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.sync i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.sync[data-mode="account"] i { background: var(--good); }
+.sync[data-mode="local"] i { background: var(--amber); }
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: .02em; text-wrap: balance; margin: 0; }
+h2 { font-size: 26px; }
+h3 { font-size: 15px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+.lede { color: var(--muted); max-width: 62ch; margin: 6px 0 0; }
+
+/* Buttons */
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 9px 16px; border-radius: var(--r); font-weight: 500; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn[disabled] { opacity: .45; cursor: default; }
+.btn.ghost { background: none; border-color: transparent; color: var(--muted); padding-inline: 8px; }
+.btn.ghost:hover { color: var(--ink); }
+.btn.danger { color: var(--bad); }
+
+/* Home */
+.hero { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; margin-top: 24px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; min-width: 0; }
+.today { display: flex; gap: 28px; align-items: flex-end; flex-wrap: wrap; margin-top: 10px; }
+.big { font-family: var(--font-display); font-weight: 600; font-size: 44px; line-height: 1; }
+.big-l { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+.today .btn { margin-left: auto; }
+.exam-facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 13.5px; margin: 10px 0 0; }
+.exam-facts dt { color: var(--muted); }
+.exam-facts dd { margin: 0; }
+.countdown { font-family: var(--font-display); font-size: 30px; font-weight: 600; line-height: 1.1; margin-top: 8px; }
+.countdown span { color: var(--muted); font-size: 16px; font-weight: 500; }
+.decks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.deck-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0 2px 8px; }
+.strips { display: flex; flex-direction: column; gap: 6px; }
+.strip { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 9px 12px 9px 9px; }
+.strip:hover { border-color: var(--accent); }
+.code { font-family: var(--font-mono); font-weight: 600; font-size: 13px; text-align: center; padding: 6px 0; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.strip-name { font-weight: 500; min-width: 0; }
+.strip-name small { display: block; line-height: 1.4; color: var(--muted); font-size: 12px; font-weight: 400; }
+.meter { display: block; height: 3px; background: var(--line); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.meter b { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+.counts { display: flex; gap: 10px; font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.counts .due { color: var(--accent); font-weight: 600; }
+.counts .new { color: var(--muted); }
+.counts .zero { opacity: .35; }
+
+/* Study */
+.bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+.bar .grow { flex: 1; }
+.pill { font-size: 12px; font-family: var(--font-mono); padding: 3px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); margin-top: 12px; }
+.card-head { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--line); }
+.card-body { padding: 20px 22px 22px; }
+.stem { font-size: 17px; line-height: 1.6; max-width: 70ch; overflow-x: auto; }
+.stem code, .sol code { font-family: var(--font-mono); font-size: 13.5px; background: var(--paper); padding: 1px 5px; border-radius: 3px; }
+.figure { margin: 14px 0 0; max-width: 420px; color: var(--ink); }
+.figure svg { width: 100%; height: auto; display: block; }
+.diff { display: inline-flex; gap: 3px; align-items: center; }
+.diff b { width: 6px; height: 12px; border-radius: 1px; background: var(--line); display: inline-block; }
+.diff b.on { background: var(--ink); }
+.choices { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+.choice { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: center; text-align: left; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; min-height: 48px; }
+.choice:hover:not([disabled]) { border-color: var(--accent); background: var(--accent-soft); }
+.choice .key { font-family: var(--font-mono); font-size: 12px; font-weight: 600; width: 26px; height: 26px; border-radius: 4px; border: 1px solid var(--line); display: grid; place-items: center; color: var(--muted); }
+.choice .txt { min-width: 0; overflow-x: auto; overflow-y: hidden; padding-block: 3px; }
+.choice[disabled] { cursor: default; }
+.choice.right { border-color: var(--good); background: var(--good-soft); }
+.choice.right .key { background: var(--good); color: var(--surface); border-color: var(--good); }
+.choice.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.choice.wrong .key { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.choice.picked { border-color: var(--accent); background: var(--accent-soft); }
+.choice.picked .key { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.timer { position: relative; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.timer b { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
+.timer.over b { background: var(--amber); }
+.clock { font-family: var(--font-mono); font-size: 13px; color: var(--muted); min-width: 52px; text-align: right; }
+.clock.over { color: var(--amber); }
+.verdict { display: flex; gap: 10px; align-items: center; margin-top: 18px; font-weight: 600; }
+.verdict.ok { color: var(--good); }
+.verdict.no { color: var(--bad); }
+.sol { margin-top: 10px; padding: 14px 16px; border-radius: var(--r); background: var(--paper); line-height: 1.65; overflow-x: auto; }
+.sol h3 { margin-bottom: 6px; }
+.rate { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+.rate button { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 8px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-weight: 600; }
+.rate button small { font-family: var(--font-mono); font-weight: 400; font-size: 11.5px; color: var(--muted); }
+.rate button:hover { border-color: var(--muted); }
+.rate button.default { box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
+.rate .again { color: var(--bad); }
+.rate .good { color: var(--good); }
+.hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+.hint kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px; padding: 0 4px; }
+.done { text-align: center; padding: 48px 20px; }
+.done p { color: var(--muted); }
+
+/* Exam */
+.exam-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.qnav { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+.qnav button { width: 34px; height: 30px; border-radius: 4px; border: 1px solid var(--line); background: var(--surface); font-family: var(--font-mono); font-size: 12px; }
+.qnav button.answered { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent); }
+.qnav button.cur { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.qnav button.r { background: var(--good-soft); border-color: var(--good-soft); color: var(--good); }
+.qnav button.w { background: var(--bad-soft); border-color: var(--bad-soft); color: var(--bad); }
+.exam-clock { font-family: var(--font-mono); font-size: 22px; font-weight: 600; }
+.exam-clock.low { color: var(--bad); }
+details.rev { border-top: 1px solid var(--line); padding: 10px 0; }
+details.rev summary { cursor: pointer; display: flex; gap: 10px; align-items: center; list-style: none; }
+details.rev summary::-webkit-details-marker { display: none; }
+.mark { font-family: var(--font-mono); font-weight: 600; width: 22px; text-align: center; }
+.mark.r { color: var(--good); } .mark.w { color: var(--bad); }
+
+/* Stats */
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.tile .big { font-size: 34px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+.trow { display: grid; grid-template-columns: 36px minmax(0, 1fr) 44px 56px; gap: 10px; align-items: center; padding: 6px 0; font-size: 13.5px; border-top: 1px solid var(--line); }
+.trow.head { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; border-top: 0; }
+.trow .num { font-family: var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+.hbar { height: 8px; background: var(--paper); border-radius: 4px; position: relative; overflow: hidden; }
+.hbar b { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 0 4px 4px 0; }
+.chart { position: relative; margin-top: 10px; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--paper); font-size: 12px; padding: 4px 8px; border-radius: 4px; white-space: nowrap; transform: translate(-50%, -110%); }
+.weak { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+
+/* Settings */
+.form { display: grid; gap: 18px; max-width: 640px; margin-top: 18px; }
+.field { display: grid; gap: 6px; }
+.field label { font-weight: 500; }
+.field .help { font-size: 13px; color: var(--muted); }
+.field input[type=number] { width: 110px; padding: 7px 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.check { display: flex; gap: 10px; align-items: flex-start; }
+.check input { margin-top: 4px; }
+textarea { width: 100%; min-height: 120px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); padding: 10px; font-family: var(--font-mono); font-size: 12px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.note { font-size: 13px; color: var(--muted); }
+
+footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); max-width: 80ch; }
+
+@media (max-width: 760px) {
+  .hero, .decks, .grid2, .exam-pick { grid-template-columns: minmax(0, 1fr); }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tabs { margin-left: 0; width: 100%; }
+  .big { font-size: 36px; }
+  .card-body { padding: 16px; }
+  .stem { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">Delft AE Drill<small>Selection exam &#xB7; maths &amp; physics</small></div>
+    <div class="sync" id="sync" data-mode="pending"><i></i><span>Connecting&#x2026;</span></div>
+    <nav class="tabs" aria-label="Sections">
+      <button class="tab" data-view="home" aria-current="page">Decks</button>
+      <button class="tab" data-view="exam">Exam</button>
+      <button class="tab" data-view="stats">Stats</button>
+      <button class="tab" data-view="settings">Settings</button>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+<div class="wrap"><footer>
+  All problems are original. They follow the TU Delft BSc Aerospace Engineering selection syllabus (Mathematics &amp; Physics, v2024) and are pitched at the level of TU Delft's Pre-University Calculus and Pre-University Physics MOOCs, Dutch VWO central exams (Wiskunde B, Natuurkunde) and Cambridge ENGAA/ESAT papers. The "modelled on" label on each card names the source whose style and level it follows. Not affiliated with TU Delft; no real exam questions are included.
+</footer></div>
+
+<script>
+window.MathJax = {
+  tex: { inlineMath: [["$", "$"]], displayMath: [["$$", "$$"]] },
+  svg: { fontCache: "global" },
+  options: { enableMenu: false },
+  startup: { typeset: false, ready() { MathJax.startup.defaultReady(); MathJax.startup.promise.then(() => { mjReady = true; typeset(document.getElementById("app")); }); } }
+};
+var mjReady = false;
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js" async></script>
+<script src="problems-math.js" charset="utf-8"></script>
+<script src="problems-physics.js" charset="utf-8"></script>
+<script>
+"use strict";
+const TOPICS = {
+  M1: "Functions & graphs", M2: "Algebraic solving", M3: "Differential calculus", M4: "Integral calculus",
+  M5: "Trigonometry", M6: "Geometry", M7: "Vectors",
+  P1: "Fundamentals", P2: "Mechanics", P3: "Electricity & magnetism", P4: "Vibrations & waves", P5: "Modelling"
+};
+const SUBJECT = { math: "Mathematics", physics: "Physics" };
+const EXAM_DATE = new Date(2027, 2, 11);
+const DAY = 864e5, MIN = 6e4, STEPS = [1, 10], TARGET = 90;
+const PROBLEMS = (window.PROBLEMS || []).slice();
+const BY_ID = new Map(PROBLEMS.map(p => [p.id, p]));
+const $app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* ---------- State ---------- */
+function todayKey(d = new Date()) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function startOfDay(ms = Date.now()) { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function fresh() { return { v: 1, updated: 0, cards: {}, day: { date: todayKey(), newDone: 0, reviewed: 0 }, settings: { newPerDay: 20, hideCalc: false }, history: {}, exams: [] }; }
+function sane(o) { return o && typeof o === "object" && o.v === 1 && o.cards && o.settings ? Object.assign(fresh(), o) : null; }
+const LS_KEY = "delft-ae-drill-v1";
+function readLocal() { try { return sane(JSON.parse(localStorage.getItem(LS_KEY))); } catch (e) { return null; } }
+function writeLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }
+let S = readLocal() || fresh();
+function rollDay() { if (S.day.date !== todayKey()) S.day = { date: todayKey(), newDone: 0, reviewed: 0 }; }
+function cs(id) { return S.cards[id] || { s: "new" }; }
+
+/* Account sync through the db capability: one private document per viewer. */
+const remote = { ref: null, mode: "pending", timer: null, chain: Promise.resolve() };
+function setSync(mode) {
+  remote.mode = mode;
+  const el = document.getElementById("sync");
+  el.dataset.mode = mode;
+  el.querySelector("span").textContent = mode === "account" ? "Saved to your account" : mode === "local" ? "Saved in this browser" : "Connecting\u2026";
+}
+async function connect() {
+  if (!window.claude || !window.claude.use) return setSync("local");
+  try {
+    const [user, db] = await Promise.all([claude.use("user"), claude.use("db")]);
+    if (!user || !db) return setSync("local");
+    const uid = await user.id();
+    if (!uid) return setSync("local");
+    remote.ref = db.doc("data/users/" + uid + "/progress");
+    const snap = await remote.ref.get();
+    if (snap.exists) {
+      let other = null;
+      try { other = sane(JSON.parse(snap.data().json)); } catch (e) {}
+      if (other && other.updated > S.updated) { S = other; writeLocal(); render(); }
+      else if (S.updated > ((other && other.updated) || 0)) pushRemote();
+    } else if (S.updated) pushRemote();
+    setSync("account");
+  } catch (e) { remote.ref = null; setSync("local"); }
+}
+function pushRemote() {
+  if (!remote.ref) return;
+  clearTimeout(remote.timer);
+  remote.timer = setTimeout(() => {
+    const body = { v: 1, updated: S.updated, json: JSON.stringify(S) };
+    remote.chain = remote.chain.then(() => remote.ref.set(body)).catch(err => {
+      if (err && (err.code === "unavailable")) return new Promise(r => setTimeout(r, 1500 + Math.random() * 1000)).then(() => remote.ref && remote.ref.set(body)).catch(() => {});
+      if (err && ["invalid_argument", "revoked", "not_granted", "capability_disabled", "capability_removed"].includes(err.code)) { remote.ref = null; setSync("local"); }
+    });
+  }, 800);
+}
+function save() { S.updated = Date.now(); writeLocal(); pushRemote(); }
+
+/* ---------- Scheduler (SM-2 with Anki-style learning steps) ---------- */
+function schedule(c0, r, now = Date.now()) {
+  const c = Object.assign({ ease: 2.5, ivl: 0, step: 0, reps: 0, lapses: 0 }, c0);
+  const relearn = c.s === "learn" && c.ivl > 0;
+  const reviewDue = days => startOfDay(now) + days * DAY;
+  if (c.s === "new" || c.s === "learn") {
+    if (c.s === "new") { c.step = 0; c.ivl = 0; }
+    if (r === 1) { c.s = "learn"; c.step = 0; c.due = now + STEPS[0] * MIN; }
+    else if (r === 2) { c.s = "learn"; c.due = now + (c.step === 0 ? 6 : STEPS[c.step] * 1.5) * MIN; }
+    else if (r === 3) {
+      if (!relearn && c.step + 1 < STEPS.length) { c.s = "learn"; c.step += 1; c.due = now + STEPS[c.step] * MIN; }
+      else { c.s = "review"; c.ivl = relearn ? Math.max(1, c.ivl) : 1; c.due = reviewDue(c.ivl); }
+    } else { c.s = "review"; c.ivl = relearn ? Math.max(1, c.ivl) + 1 : 4; c.due = reviewDue(c.ivl); }
+  } else {
+    const late = Math.max(0, (now - c.due) / DAY);
+    if (r === 1) { c.lapses += 1; c.ease = Math.max(1.3, c.ease - 0.2); c.ivl = Math.max(1, Math.round(c.ivl * 0.5)); c.s = "learn"; c.step = 0; c.due = now + 10 * MIN; }
+    else {
+      if (r === 2) { c.ease = Math.max(1.3, c.ease - 0.15); c.ivl = Math.max(c.ivl + 1, Math.round(c.ivl * 1.2)); }
+      else if (r === 3) { c.ivl = Math.max(c.ivl + 1, Math.round((c.ivl + late / 2) * c.ease)); }
+      else { c.ease += 0.15; c.ivl = Math.max(c.ivl + 2, Math.round((c.ivl + late) * c.ease * 1.3)); }
+      c.ivl = Math.min(c.ivl, 365);
+      c.due = reviewDue(c.ivl);
+    }
+  }
+  c.reps += 1;
+  return c;
+}
+function fmtIvl(c, now = Date.now()) {
+  const ms = c.due - now;
+  if (c.s === "learn") return ms < 60 * MIN ? Math.max(1, Math.round(ms / MIN)) + " min" : Math.round(ms / 36e5) + " h";
+  const d = c.ivl;
+  return d < 31 ? d + " d" : d < 365 ? (d / 30).toFixed(1).replace(".0", "") + " mo" : (d / 365).toFixed(1) + " y";
+}
+
+/* ---------- Decks and queues ---------- */
+function inDeck(p, deck) {
+  if (deck === "all") return true;
+  if (deck === "math" || deck === "physics") return p.subject === deck;
+  return p.id.startsWith(deck + "-");
+}
+function pool(deck) { return PROBLEMS.filter(p => inDeck(p, deck) && !(S.settings.hideCalc && p.calc)); }
+function newLeft() { rollDay(); return Math.max(0, S.settings.newPerDay - S.day.newDone); }
+function deckCounts(deck, now = Date.now()) {
+  let due = 0, nw = 0, learned = 0, total = 0;
+  for (const p of pool(deck)) {
+    total++;
+    const c = cs(p.id);
+    if (c.s === "new") nw++;
+    else { if (c.due <= now) due++; if (c.s === "review") learned++; }
+  }
+  return { due, nw, learned, total };
+}
+function deckName(deck) {
+  if (deck === "all") return "All topics";
+  if (SUBJECT[deck]) return SUBJECT[deck];
+  const [t, s] = deck.split("-");
+  return t + (s ? " " + s : "") + " \u00B7 " + TOPICS[t];
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function nextCard(deck, avoid, cram) {
+  const now = Date.now(), ps = pool(deck);
+  const learnDue = ps.filter(p => cs(p.id).s === "learn" && cs(p.id).due <= now).sort((a, b) => cs(a.id).due - cs(b.id).due);
+  const pickNot = arr => arr.find(p => p.id !== avoid) || arr[0];
+  if (learnDue.length) return pickNot(learnDue);
+  const rev = shuffle(ps.filter(p => cs(p.id).s === "review" && cs(p.id).due <= now));
+  if (rev.length) return pickNot(rev);
+  if (newLeft() > 0) {
+    const nw = ps.filter(p => cs(p.id).s === "new");
+    if (nw.length) {
+      // Easier first, random within a difficulty level, so topics interleave.
+      const minD = Math.min(...nw.map(p => p.difficulty));
+      const tier = shuffle(nw.filter(p => p.difficulty <= minD + (S.day.newDone > 6 ? 1 : 0)));
+      return tier[0];
+    }
+  }
+  const soon = ps.filter(p => cs(p.id).s === "learn" && cs(p.id).due <= now + 20 * MIN).sort((a, b) => cs(a.id).due - cs(b.id).due);
+  if (soon.length) return pickNot(soon);
+  if (cram) return pickNot(shuffle(ps.slice()));
+  return null;
+}
+
+/* ---------- Views ---------- */
+let view = "home";
+let session = null;   // study session
+let exam = null;      // exam in progress or finished
+let tick = null;
+
+function go(v) {
+  view = v;
+  document.querySelectorAll(".tab").forEach(b => b.toggleAttribute("aria-current", false));
+  const tab = document.querySelector('.tab[data-view="' + (v === "study" ? "home" : v) + '"]');
+  if (tab) tab.setAttribute("aria-current", "page");
+  render();
+  window.scrollTo(0, 0);
+}
+function render() {
+  clearInterval(tick); tick = null;
+  if (view === "home") renderHome();
+  else if (view === "study") renderStudy();
+  else if (view === "exam") renderExam();
+  else if (view === "stats") renderStats();
+  else renderSettings();
+  typeset($app);
+}
+function typeset(el) {
+  if (!mjReady || !window.MathJax || !MathJax.typesetPromise) return;
+  try { MathJax.typesetClear([el]); } catch (e) {}
+  MathJax.typesetPromise([el]).catch(() => {});
+}
+
+function stripHTML(deck, label, sub) {
+  const k = deckCounts(deck);
+  const pct = k.total ? Math.round(100 * k.learned / k.total) : 0;
+  const nAvail = Math.min(k.nw, newLeft());
+  return `<button class="strip" data-study="${deck}">
+    <span class="code">${esc(deck.length <= 3 ? deck : deck === "math" ? "M" : "P")}</span>
+    <span class="strip-name">${esc(label)}<small>${esc(sub)}</small><span class="meter" title="${pct}% learned"><b style="width:${pct}%"></b></span></span>
+    <span class="counts"><span class="due ${k.due ? "" : "zero"}" title="Due now">${k.due}</span><span class="new ${nAvail ? "" : "zero"}" title="New available today">+${nAvail}</span></span>
+  </button>`;
+}
+function renderHome() {
+  const k = deckCounts("all");
+  const days = Math.ceil((EXAM_DATE - startOfDay()) / DAY);
+  const subjects = ["math", "physics"].map(s => {
+    const topics = Object.keys(TOPICS).filter(t => (t[0] === "M") === (s === "math"));
+    return `<section><div class="deck-head"><h3>${SUBJECT[s]}</h3><span class="note mono">due \u00B7 new</span></div><div class="strips">
+      ${stripHTML(s, "All " + SUBJECT[s].toLowerCase(), pool(s).length + " cards, mixed topics")}
+      ${topics.map(t => stripHTML(t, TOPICS[t], pool(t).length + " cards")).join("")}
+    </div></section>`;
+  }).join("");
+  $app.innerHTML = `
+    <div class="hero">
+      <div class="panel">
+        <h3>Today</h3>
+        <div class="today">
+          <div><div class="big mono">${k.due}</div><div class="big-l">Due reviews</div></div>
+          <div><div class="big mono">${Math.min(k.nw, newLeft())}</div><div class="big-l">New cards</div></div>
+          <div><div class="big mono">${S.day.reviewed}</div><div class="big-l">Answered today</div></div>
+          <button class="btn primary" data-study="all">Start session</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Selection exam</h3>
+        <div class="countdown">${days > 0 ? days + ' <span>days to 11 March 2027</span>' : 'Exam day has passed <span>check the TU Delft site for the next date</span>'}</div>
+        <dl class="exam-facts">
+          <dt>Maths</dt><dd>30 min \u00B7 about 20 questions \u00B7 30%</dd>
+          <dt>Physics</dt><dd>30 min \u00B7 about 20 questions \u00B7 30%</dd>
+          <dt>Calculator</dt><dd>Computer calculator only, basic or scientific mode</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="decks">${subjects}</div>`;
+}
+
+/* Study */
+function startStudy(deck, cram) {
+  session = { deck, cram: !!cram, done: 0, right: 0, cur: null };
+  advance();
+  go("study");
+}
+function advance() {
+  const p = nextCard(session.deck, session.cur && session.cur.id, session.cram);
+  session.cur = p ? { id: p.id, perm: shuffle(p.choices.map((_, i) => i)), start: Date.now(), picked: null, ms: 0 } : null;
+}
+function diffHTML(d) { return `<span class="diff" title="Difficulty ${d} of 3">${[1, 2, 3].map(i => `<b class="${i <= d ? "on" : ""}"></b>`).join("")}</span>`; }
+function cardHead(p) {
+  return `<div class="card-head">
+    <span class="code" style="padding:3px 7px">${p.topic}\u00B7${p.sub}</span>
+    <span class="note">${esc(TOPICS[p.topic])}</span>
+    <span style="flex:1"></span>
+    ${diffHTML(p.difficulty)}
+    <span class="pill" title="Style and level follow this source">modelled on ${esc(p.model)}</span>
+    ${p.calc ? '<span class="pill" title="A scientific calculator is reasonable here">calculator</span>' : '<span class="pill" title="Intended to be done by hand">by hand</span>'}
+  </div>`;
+}
+function choicesHTML(p, perm, state) {
+  return perm.map((ci, k) => {
+    let cls = "";
+    if (state && state.reveal) { if (ci === p.answer) cls = "right"; else if (ci === state.picked) cls = "wrong"; }
+    else if (state && state.picked === ci) cls = "picked";
+    return `<button class="choice ${cls}" data-choice="${ci}" ${state && state.reveal ? "disabled" : ""}><span class="key">${"ABCDE"[k]}</span><span class="txt">${p.choices[ci]}</span></button>`;
+  }).join("");
+}
+function renderStudy() {
+  if (!session) return go("home");
+  const cur = session.cur;
+  const top = `<div class="bar">
+    <button class="btn ghost" data-go="home">\u2190 Decks</button>
+    <strong>${esc(deckName(session.deck))}</strong>${session.cram ? ' <span class="pill">practice ahead</span>' : ""}
+    <span class="grow"></span>
+    <span class="note mono">${session.done} answered \u00B7 ${session.right} correct</span>
+  </div>`;
+  if (!cur) {
+    const ps = pool(session.deck).filter(p => cs(p.id).s !== "new");
+    const next = ps.length ? Math.min(...ps.map(p => cs(p.id).due)) : null;
+    $app.innerHTML = top + `<div class="card done"><h2>Nothing due in this deck</h2>
+      <p>${next ? "Next review " + new Date(next).toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + "." : "You have used today's new cards."}${newLeft() === 0 ? " Today's new-card limit is reached; raise it in Settings if you want more." : ""}</p>
+      <div class="row" style="justify-content:center;margin-top:16px"><button class="btn primary" data-cram="${session.deck}">Practise this deck anyway</button><button class="btn" data-go="home">Back to decks</button></div></div>`;
+    return;
+  }
+  const p = BY_ID.get(cur.id);
+  const revealed = cur.picked !== null;
+  let after = "";
+  if (revealed) {
+    const ok = cur.picked === p.answer;
+    const def = ok ? (cur.ms <= TARGET * 1000 ? 3 : 2) : 1;
+    cur.def = def;
+    const c = cs(p.id);
+    const labels = [["Again", "again"], ["Hard", ""], ["Good", "good"], ["Easy", ""]];
+    after = `<div class="verdict ${ok ? "ok" : "no"}">${ok ? "\u2713 Correct" : "\u2717 Not quite"} <span class="note mono" style="font-weight:400">${Math.round(cur.ms / 1000)} s${cur.ms > TARGET * 1000 ? " \u00B7 over the 90 s exam pace" : ""}</span></div>
+      <div class="sol"><h3>Worked solution</h3>${p.solution}</div>
+      <div class="rate">${labels.map(([l, cls], i) => `<button class="${cls} ${def === i + 1 ? "default" : ""}" data-rate="${i + 1}">${l}<small>${fmtIvl(schedule(c, i + 1))}</small></button>`).join("")}</div>
+      <div class="hint">Rate how well you knew it: <kbd>1</kbd>\u2013<kbd>4</kbd>, or <kbd>Enter</kbd> for the highlighted rating.</div>`;
+  }
+  $app.innerHTML = top + `<div class="card">${cardHead(p)}
+    <div class="card-body">
+      <div class="row" style="gap:10px;margin-bottom:16px"><div class="timer grow" id="tbar" style="flex:1"><b style="width:0"></b></div><span class="clock" id="clock">0 s</span></div>
+      <div class="stem">${p.stem}</div>
+      ${p.figure ? `<div class="figure">${p.figure}</div>` : ""}
+      <div class="choices">${choicesHTML(p, cur.perm, revealed ? { reveal: true, picked: cur.picked } : null)}</div>
+      ${revealed ? after : '<div class="hint">Pick an answer: <kbd>A</kbd>\u2013<kbd>' + "ABCDE"[p.choices.length - 1] + "</kbd> or <kbd>1</kbd>\u2013<kbd>" + p.choices.length + "</kbd>.</div>"}
+    </div></div>`;
+  updateTimer();
+  if (!revealed) tick = setInterval(updateTimer, 250);
+}
+function updateTimer() {
+  if (!session || !session.cur) return;
+  const cur = session.cur;
+  const ms = cur.picked !== null ? cur.ms : Date.now() - cur.start;
+  const bar = document.getElementById("tbar"), clock = document.getElementById("clock");
+  if (!bar) return;
+  const over = ms > TARGET * 1000;
+  bar.classList.toggle("over", over); clock.classList.toggle("over", over);
+  bar.firstElementChild.style.width = Math.min(100, ms / (TARGET * 10)) + "%";
+  clock.textContent = Math.floor(ms / 1000) + " s";
+}
+function pick(ci) {
+  const cur = session.cur;
+  if (!cur || cur.picked !== null) return;
+  cur.picked = ci; cur.ms = Date.now() - cur.start;
+  const p = BY_ID.get(cur.id), ok = ci === p.answer;
+  const c = Object.assign({}, cs(p.id));
+  c.seen = (c.seen || 0) + 1; c.right = (c.right || 0) + (ok ? 1 : 0); c.tsum = (c.tsum || 0) + Math.min(cur.ms, 600000);
+  S.cards[p.id] = c;
+  rollDay();
+  S.history[todayKey()] = (S.history[todayKey()] || 0) + 1;
+  session.done++; if (ok) session.right++;
+  save();
+  render();
+}
+function rate(r) {
+  const cur = session.cur;
+  if (!cur || cur.picked === null) return;
+  const before = cs(cur.id);
+  rollDay();
+  if (before.s === "new") S.day.newDone++;
+  S.day.reviewed++;
+  S.cards[cur.id] = schedule(before, r);
+  save();
+  advance();
+  render();
+}
+
+/* Exam simulation */
+function startExam(subject) {
+  const ids = shuffle(PROBLEMS.filter(p => p.subject === subject).map(p => p.id)).slice(0, 20);
+  exam = { subject, ids, perm: ids.map(id => shuffle(BY_ID.get(id).choices.map((_, i) => i))), ans: ids.map(() => null), spent: ids.map(() => 0), idx: 0, start: Date.now(), seen: Date.now(), limit: 30 * MIN, done: false };
+  render();
+}
+function examLeft() { return exam.limit - (Date.now() - exam.start); }
+function noteSpent() { const now = Date.now(); exam.spent[exam.idx] += now - exam.seen; exam.seen = now; }
+function finishExam() {
+  if (!exam || exam.done) return;
+  noteSpent();
+  exam.done = true;
+  exam.end = Date.now();
+  const score = exam.ids.filter((id, i) => exam.ans[i] === BY_ID.get(id).answer).length;
+  exam.score = score;
+  // Missed cards come back for review now.
+  exam.ids.forEach((id, i) => {
+    const p = BY_ID.get(id), ok = exam.ans[i] === p.answer;
+    const c = Object.assign({}, cs(id));
+    c.seen = (c.seen || 0) + (exam.ans[i] === null ? 0 : 1); c.right = (c.right || 0) + (ok ? 1 : 0);
+    if (exam.ans[i] !== null) c.tsum = (c.tsum || 0) + Math.min(exam.spent[i], 600000);
+    if (!ok) { if (c.s === "review") { c.s = "learn"; c.step = 0; c.lapses = (c.lapses || 0) + 1; c.ease = Math.max(1.3, (c.ease || 2.5) - 0.2); } else if (c.s === "new") { c.s = "learn"; c.step = 0; c.ivl = 0; c.ease = 2.5; c.reps = 0; c.lapses = 0; } c.due = Date.now(); }
+    S.cards[id] = c;
+  });
+  S.history[todayKey()] = (S.history[todayKey()] || 0) + exam.ans.filter(a => a !== null).length;
+  S.exams = (S.exams || []).concat([{ date: todayKey(), subject: exam.subject, score, n: exam.ids.length, ms: exam.end - exam.start }]).slice(-30);
+  save();
+  render();
+}
+function fmtClock(ms) { ms = Math.max(0, ms); const s = Math.ceil(ms / 1000); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
+function renderExam() {
+  if (!exam) {
+    const past = (S.exams || []).slice().reverse().slice(0, 6);
+    $app.innerHTML = `<div style="margin-top:24px"><h2>Exam simulation</h2>
+      <p class="lede">20 random questions from one section, 30 minutes, no feedback until you submit. That is the real exam's pace of about 90 seconds a question. Use only paper and your computer's calculator in basic or scientific mode. Wrong answers go straight back into your review queue.</p></div>
+      <div class="exam-pick">${["math", "physics"].map(s => `<div class="panel"><h3>${SUBJECT[s]}</h3><p class="note">${PROBLEMS.filter(p => p.subject === s).length} cards in the pool</p><button class="btn primary" data-exam="${s}">Start ${SUBJECT[s].toLowerCase()} section</button></div>`).join("")}</div>
+      ${past.length ? `<div class="panel" style="margin-top:16px"><h3>Recent attempts</h3>${past.map(e => `<div class="weak"><span>${esc(SUBJECT[e.subject])} <span class="note">${e.date}</span></span><span class="mono">${e.score}/${e.n} \u00B7 ${fmtClock(e.ms)}</span></div>`).join("")}</div>` : ""}`;
+    return;
+  }
+  if (exam.done) {
+    const pct = Math.round(100 * exam.score / exam.ids.length);
+    const timed = exam.spent.reduce((a, b) => a + b, 0);
+    $app.innerHTML = `<div class="bar"><h2 style="flex:1">${SUBJECT[exam.subject]} section \u00B7 result</h2><button class="btn" data-exam-reset>New exam</button></div>
+      <div class="tiles">
+        <div class="panel tile"><div class="big mono">${exam.score}/${exam.ids.length}</div><div class="big-l">Correct (${pct}%)</div></div>
+        <div class="panel tile"><div class="big mono">${fmtClock(exam.end - exam.start)}</div><div class="big-l">Time used of 30:00</div></div>
+        <div class="panel tile"><div class="big mono">${Math.round(timed / 1000 / exam.ids.length)} s</div><div class="big-l">Average per question</div></div>
+        <div class="panel tile"><div class="big mono">${exam.ans.filter(a => a === null).length}</div><div class="big-l">Left blank</div></div>
+      </div>
+      <p class="note" style="margin-top:12px">There is no penalty for wrong answers in the real exam, so never leave a question blank. Ranking is relative to other applicants, so there is no fixed pass mark.</p>
+      <div class="panel" style="margin-top:12px"><h3>Review</h3>${exam.ids.map((id, i) => {
+        const p = BY_ID.get(id), ok = exam.ans[i] === p.answer;
+        return `<details class="rev"><summary><span class="mark ${ok ? "r" : "w"}">${ok ? "\u2713" : "\u2717"}</span><span class="mono note">Q${i + 1}</span><span class="code" style="padding:2px 6px">${p.topic}\u00B7${p.sub}</span><span class="note mono">${Math.round(exam.spent[i] / 1000)} s</span></summary>
+          <div style="padding:10px 0 4px"><div class="stem">${p.stem}</div>${p.figure ? `<div class="figure">${p.figure}</div>` : ""}<div class="choices">${choicesHTML(p, exam.perm[i], { reveal: true, picked: exam.ans[i] })}</div><div class="sol"><h3>Worked solution</h3>${p.solution}</div></div></details>`;
+      }).join("")}</div>`;
+    return;
+  }
+  const i = exam.idx, p = BY_ID.get(exam.ids[i]);
+  $app.innerHTML = `<div class="bar"><strong>${SUBJECT[exam.subject]} section</strong><span class="note mono">Question ${i + 1} of ${exam.ids.length}</span><span class="grow"></span><span class="exam-clock" id="eclock">${fmtClock(examLeft())}</span></div>
+    <div class="qnav">${exam.ids.map((_, k) => `<button class="${exam.ans[k] !== null ? "answered" : ""} ${k === i ? "cur" : ""}" data-q="${k}" aria-label="Question ${k + 1}">${k + 1}</button>`).join("")}</div>
+    <div class="card">${cardHead(p)}<div class="card-body"><div class="stem">${p.stem}</div>${p.figure ? `<div class="figure">${p.figure}</div>` : ""}
+      <div class="choices">${choicesHTML(p, exam.perm[i], { picked: exam.ans[i] })}</div>
+      <div class="row" style="margin-top:18px"><button class="btn" data-q="${i - 1}" ${i === 0 ? "disabled" : ""}>\u2190 Previous</button><button class="btn" data-q="${i + 1}" ${i === exam.ids.length - 1 ? "disabled" : ""}>Next \u2192</button><span class="grow" style="flex:1"></span><span id="confirm-slot"><button class="btn primary" data-submit>Submit section</button></span></div>
+    </div></div>`;
+  const upd = () => { const el = document.getElementById("eclock"); const left = examLeft(); if (el) { el.textContent = fmtClock(left); el.classList.toggle("low", left < 5 * MIN); } if (left <= 0) finishExam(); };
+  tick = setInterval(upd, 500);
+}
+
+/* Stats */
+function renderStats() {
+  const seenCards = PROBLEMS.filter(p => cs(p.id).seen);
+  const att = seenCards.reduce((a, p) => a + cs(p.id).seen, 0);
+  const right = seenCards.reduce((a, p) => a + (cs(p.id).right || 0), 0);
+  const tsum = seenCards.reduce((a, p) => a + (cs(p.id).tsum || 0), 0);
+  let streak = 0; for (let d = new Date(); S.history[todayKey(d)]; d.setDate(d.getDate() - 1)) streak++;
+  const topicRows = Object.keys(TOPICS).map(t => {
+    const ps = PROBLEMS.filter(p => p.topic === t);
+    const a = ps.reduce((s, p) => s + (cs(p.id).seen || 0), 0), r = ps.reduce((s, p) => s + (cs(p.id).right || 0), 0), ts = ps.reduce((s, p) => s + (cs(p.id).tsum || 0), 0);
+    return { t, a, acc: a ? r / a : null, avg: a ? ts / a / 1000 : null };
+  });
+  // Forecast: reviews due on each of the next 14 days (overdue counted today).
+  const base = startOfDay();
+  const fc = Array.from({ length: 14 }, () => 0);
+  for (const p of PROBLEMS) { const c = cs(p.id); if (c.s === "new") continue; const k = Math.max(0, Math.floor((c.due - base) / DAY)); if (k < 14) fc[k]++; }
+  const subs = {};
+  for (const p of PROBLEMS) { const c = cs(p.id); if (!c.seen) continue; const k = p.topic + "-" + p.sub; subs[k] = subs[k] || { a: 0, r: 0 }; subs[k].a += c.seen; subs[k].r += c.right || 0; }
+  const weak = Object.entries(subs).filter(([, v]) => v.a >= 2).map(([k, v]) => ({ k, acc: v.r / v.a, a: v.a })).sort((x, y) => x.acc - y.acc || y.a - x.a).slice(0, 6);
+  const max = Math.max(4, ...fc);
+  const W = 420, H = 150, pl = 26, pb = 22, bw = (W - pl) / 14;
+  const ticks = [0, Math.round(max / 2), max];
+  const svg = `<svg viewBox="0 0 ${W} ${H + 4}" role="img" aria-label="Reviews due per day for the next 14 days">
+    ${ticks.map(v => { const y = H - pb - (H - pb - 8) * v / max; return `<line x1="${pl}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/><text x="${pl - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="var(--font-mono)">${v}</text>`; }).join("")}
+    ${fc.map((v, k) => { const h = (H - pb - 8) * v / max, x = pl + k * bw + 3, w = bw - 6, y = H - pb - h; const d = new Date(base + k * DAY);
+      const label = (k === 0 ? "Today" : d.toLocaleDateString([], { weekday: "short", day: "numeric" })) + ": " + v + " due";
+      return `<g class="fbar" data-tip="${esc(label)}"><rect x="${pl + k * bw}" y="8" width="${bw}" height="${H - pb - 8}" fill="transparent"/>${v ? `<path d="M${x} ${H - pb}V${y + Math.min(4, h)}q0 -4 4 -4h${w - 8}q4 0 4 4V${H - pb}Z" fill="var(--accent)"/>` : ""}${k % 2 === 0 ? `<text x="${x + w / 2}" y="${H - 6}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="var(--font-mono)">${k === 0 ? "today" : "+" + k}</text>` : ""}</g>`; }).join("")}
+  </svg>`;
+  $app.innerHTML = `<div style="margin-top:24px"><h2>Progress</h2></div>
+    <div class="tiles">
+      <div class="panel tile"><div class="big mono">${seenCards.length}<span class="note" style="font-size:16px">/${PROBLEMS.length}</span></div><div class="big-l">Cards attempted</div></div>
+      <div class="panel tile"><div class="big mono">${att ? Math.round(100 * right / att) + "%" : "\u2013"}</div><div class="big-l">Accuracy, all answers</div></div>
+      <div class="panel tile"><div class="big mono">${att ? Math.round(tsum / att / 1000) + " s" : "\u2013"}</div><div class="big-l">Average time \u00B7 target 90 s</div></div>
+      <div class="panel tile"><div class="big mono">${streak}</div><div class="big-l">Day streak</div></div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><h3>By topic</h3>
+        <div class="trow head"><span></span><span>Accuracy</span><span class="num">%</span><span class="num">avg s</span></div>
+        ${topicRows.map(r => `<div class="trow"><span class="code" style="padding:2px 0">${r.t}</span><span><span class="note" style="font-size:12px">${esc(TOPICS[r.t])}</span><span class="hbar"><b style="width:${r.acc === null ? 0 : Math.round(r.acc * 100)}%"></b></span></span><span class="num">${r.acc === null ? "\u2013" : Math.round(r.acc * 100)}</span><span class="num" style="${r.avg > TARGET ? "color:var(--amber)" : ""}">${r.avg === null ? "\u2013" : Math.round(r.avg)}</span></div>`).join("")}
+      </div>
+      <div style="display:grid;gap:16px;align-content:start">
+        <div class="panel"><h3>Reviews due, next 14 days</h3><div class="chart" id="fchart">${svg}</div></div>
+        <div class="panel"><h3>Weakest sub-topics</h3>${weak.length ? weak.map(w => `<div class="weak"><span><span class="code" style="padding:2px 6px">${w.k.replace("-", "\u00B7")}</span> <span class="note">${esc(TOPICS[w.k.split("-")[0]])}</span></span><span class="row"><span class="mono">${Math.round(w.acc * 100)}%</span><button class="btn" data-cram="${w.k}">Drill</button></span></div>`).join("") : '<p class="note">Answer a few cards per topic and your weakest syllabus items will show up here.</p>'}</div>
+      </div>
+    </div>`;
+  const chart = document.getElementById("fchart");
+  chart.addEventListener("mousemove", ev => {
+    const g = ev.target.closest(".fbar"); let tip = chart.querySelector(".tip");
+    if (!g) { if (tip) tip.remove(); return; }
+    if (!tip) { tip = document.createElement("div"); tip.className = "tip"; chart.appendChild(tip); }
+    tip.textContent = g.dataset.tip;
+    const r = chart.getBoundingClientRect(); tip.style.left = (ev.clientX - r.left) + "px"; tip.style.top = (ev.clientY - r.top) + "px";
+  });
+  chart.addEventListener("mouseleave", () => { const t = chart.querySelector(".tip"); if (t) t.remove(); });
+}
+
+/* Settings */
+let resetArmed = false;
+function renderSettings() {
+  $app.innerHTML = `<div style="margin-top:24px"><h2>Settings</h2></div>
+    <div class="form">
+      <div class="field"><label for="npd">New cards per day</label><input id="npd" type="number" min="0" max="200" value="${S.settings.newPerDay}"><span class="help">With 20 a day you see the full bank of ${PROBLEMS.length} cards in about ${Math.ceil(PROBLEMS.length / Math.max(1, S.settings.newPerDay))} days.</span></div>
+      <div class="field"><div class="check"><input id="hc" type="checkbox" ${S.settings.hideCalc ? "checked" : ""}><label for="hc">Skip calculator cards in study sessions<br><span class="help">${PROBLEMS.filter(p => p.calc).length} cards expect a scientific calculator. Exam simulations always include them.</span></label></div></div>
+      <div class="field"><label>Your progress</label><span class="help">${remote.mode === "account" ? "Progress is saved to your Claude account and follows you to other devices." : "Progress is saved in this browser only. Export it to keep a copy."}</span>
+        <div class="row"><button class="btn" data-export>Export progress</button><label class="btn" for="imp" style="display:inline-block">Import from file</label><input id="imp" type="file" accept="application/json,.json" hidden></div>
+        <div id="io"></div></div>
+      <div class="field"><label>Reset</label><span class="help">Clears every review, statistic and exam result.</span><div class="row"><button class="btn danger" data-reset>${resetArmed ? "Click again to erase all progress" : "Reset progress"}</button>${resetArmed ? '<button class="btn ghost" data-reset-cancel>Cancel</button>' : ""}</div></div>
+    </div>`;
+}
+async function doExport() {
+  const json = JSON.stringify(S, null, 1);
+  const io = document.getElementById("io");
+  let dl = null;
+  try { dl = window.claude && claude.use ? await claude.use("downloads") : null; } catch (e) {}
+  if (dl) {
+    try { await dl.save({ filename: "delft-ae-drill-progress.json", data: json }); io.innerHTML = '<p class="note">Export ready.</p>'; return; }
+    catch (e) { if (e && e.code === "declined") { io.innerHTML = '<p class="note">Export cancelled.</p>'; return; } }
+  }
+  if (!window.claude) {
+    // Standalone hosting (outside claude.ai): a normal file download works.
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+    a.download = "delft-ae-drill-progress.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    io.innerHTML = '<p class="note">Export downloaded.</p>';
+    return;
+  }
+  io.innerHTML = `<p class="note">Copy this text and keep it somewhere safe. Paste it back with Import to restore.</p><textarea id="iotext" readonly>${esc(json)}</textarea><div class="row"><button class="btn" data-copy>Copy</button></div>`;
+}
+function doImport(text) {
+  const io = document.getElementById("io");
+  let o = null; try { o = sane(JSON.parse(text)); } catch (e) {}
+  if (!o) { io.innerHTML = '<p class="note" style="color:var(--bad)">That file is not a Delft AE Drill export. Choose the .json file you exported.</p>'; return; }
+  S = o; save(); render();
+  document.getElementById("io").innerHTML = '<p class="note">Progress imported.</p>';
+}
+
+/* ---------- Events ---------- */
+document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest(".tab"); if (b) { if (view === "exam" && exam && !exam.done && b.dataset.view !== "exam") noteSpent(); go(b.dataset.view); } });
+$app.addEventListener("click", e => {
+  const t = e.target.closest("button, [data-study]");
+  if (!t) return;
+  const d = t.dataset;
+  if (d.study) startStudy(d.study);
+  else if (d.cram) startStudy(d.cram, true);
+  else if (d.go) go(d.go);
+  else if (d.choice !== undefined) {
+    if (view === "study") pick(+d.choice);
+    else if (view === "exam" && exam && !exam.done) { exam.ans[exam.idx] = +d.choice; render(); }
+  }
+  else if (d.rate) rate(+d.rate);
+  else if (d.exam) startExam(d.exam);
+  else if (d.examReset !== undefined) { exam = null; render(); }
+  else if (d.q !== undefined) { const k = +d.q; if (k >= 0 && k < exam.ids.length) { noteSpent(); exam.idx = k; render(); } }
+  else if (d.submit !== undefined) {
+    const blank = exam.ans.filter(a => a === null).length;
+    document.getElementById("confirm-slot").innerHTML = `<span class="note">${blank ? blank + " unanswered. " : ""}Submit?</span> <button class="btn primary" data-submit-yes>Submit</button> <button class="btn ghost" data-submit-no>Keep going</button>`;
+  }
+  else if (d.submitYes !== undefined) finishExam();
+  else if (d.submitNo !== undefined) render();
+  else if (d.export !== undefined) doExport();
+  else if (d.copy !== undefined) { const ta = document.getElementById("iotext"); navigator.clipboard.writeText(ta.value).then(() => { t.textContent = "Copied"; }, () => { ta.select(); }); }
+  else if (d.reset !== undefined) { if (resetArmed) { resetArmed = false; S = fresh(); save(); } else resetArmed = true; render(); }
+  else if (d.resetCancel !== undefined) { resetArmed = false; render(); }
+});
+$app.addEventListener("change", e => {
+  if (e.target.id === "npd") { S.settings.newPerDay = Math.max(0, Math.min(200, Math.round(+e.target.value || 0))); save(); render(); }
+  else if (e.target.id === "hc") { S.settings.hideCalc = e.target.checked; save(); }
+  else if (e.target.id === "imp" && e.target.files[0]) { const fr = new FileReader(); fr.onload = () => doImport(fr.result); fr.readAsText(e.target.files[0]); }
+});
+document.addEventListener("keydown", e => {
+  if (e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  const k = e.key.toUpperCase();
+  if (view === "study" && session && session.cur) {
+    const p = BY_ID.get(session.cur.id), cur = session.cur;
+    if (cur.picked === null) {
+      let i = "ABCDE".indexOf(k); if (i < 0 && /^[1-5]$/.test(k)) i = +k - 1;
+      if (i >= 0 && i < p.choices.length) { e.preventDefault(); pick(cur.perm[i]); }
+    } else {
+      if (/^[1-4]$/.test(k)) { e.preventDefault(); rate(+k); }
+      else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rate(cur.def || 3); }
+    }
+  } else if (view === "exam" && exam && !exam.done) {
+    const p = BY_ID.get(exam.ids[exam.idx]);
+    let i = "ABCDE".indexOf(k); if (i < 0 && /^[1-5]$/.test(k)) i = +k - 1;
+    if (i >= 0 && i < p.choices.length) { exam.ans[exam.idx] = exam.perm[exam.idx][i]; render(); }
+    else if (e.key === "ArrowRight" && exam.idx < exam.ids.length - 1) { noteSpent(); exam.idx++; render(); }
+    else if (e.key === "ArrowLeft" && exam.idx > 0) { noteSpent(); exam.idx--; render(); }
+  }
+});
+
+render();
+connect();
+</script>
+</body>
+</html>
