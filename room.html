@@ -149,18 +149,38 @@ body.walking #xhair { display: block; }
 .s-time { font: 500 120px/1 var(--font-hud); color: var(--hud); font-variant-numeric: tabular-nums; }
 .s-sub { font: 13px var(--font-ui); color: rgba(207,214,234,.7); margin-bottom: 12px; }
 .s-hint { font: 12px var(--font-ui); color: rgba(207,214,234,.55); }
-.menu { position: fixed; z-index: 8; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(430px, calc(100vw - 32px)); background: rgba(16,14,9,.93); border: 1px solid rgba(255,173,31,.5); padding: 16px 18px 18px; color: #f3e9cf; font: 14px/1.45 var(--font-ui); box-shadow: 0 10px 40px rgba(0,0,0,.6); }
-.m-title { font: 500 30px/1 var(--font-hud); color: var(--hud); letter-spacing: .08em; text-transform: uppercase; }
-.m-sub { color: rgba(243,233,207,.72); margin: 6px 0 10px; font-size: 13px; }
-.m-opt { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 6px 6px; font: 15px var(--font-ui); color: #f3e9cf; border-radius: 2px; }
-.m-opt span { display: inline-block; width: 22px; color: var(--hud); font-weight: 600; }
-.m-opt:hover, .m-opt:focus-visible { background: rgba(255,173,31,.14); }
-.m-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
-.m-row label { min-width: 52px; color: var(--hud); }
-.menu input[type=number] { width: 70px; background: #0b0a06; border: 1px solid rgba(255,173,31,.4); color: #f3e9cf; padding: 5px 7px; font: inherit; }
-.m-check { display: flex; gap: 8px; align-items: center; color: #f3e9cf; }
-.m-btn { background: rgba(255,173,31,.14); border: 1px solid rgba(255,173,31,.45); color: #f3e9cf; padding: 6px 12px; font: 500 14px var(--font-ui); border-radius: 2px; }
-.m-btn:hover { background: rgba(255,173,31,.26); }
+/* Menus: olive VGUI dialog (late-90s game settings window) */
+:root { --vg-bg: #4c5844; --vg-field: #3e4637; --vg-hi: #8c9480; --vg-lo: #292c21; --vg-text: #d8ded3; --vg-dim: #a3ac99; --vg-font: Tahoma, Verdana, Geneva, "DejaVu Sans", sans-serif; }
+.menu { position: fixed; z-index: 8; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(470px, calc(100vw - 24px)); background: var(--vg-bg); color: var(--vg-text); font: 12px/1.35 var(--vg-font);
+  border: 1px solid; border-color: var(--vg-hi) var(--vg-lo) var(--vg-lo) var(--vg-hi); box-shadow: 0 0 0 1px #1c1f17, 0 12px 40px rgba(0,0,0,.65); }
+.m-bar { display: flex; align-items: center; gap: 7px; padding: 6px 6px 4px 8px; font-size: 13px; color: #e6ebe1; user-select: none; }
+.m-ico { width: 14px; height: 14px; display: inline-grid; place-items: center; font-size: 11px; color: var(--vg-text); }
+.m-x { margin-left: auto; width: 20px; height: 18px; padding: 0; background: var(--vg-bg); color: var(--vg-text); font: 13px/1 var(--vg-font); border: 1px solid; border-color: var(--vg-hi) var(--vg-lo) var(--vg-lo) var(--vg-hi); }
+.m-panel { margin: 4px 10px 0; padding: 12px 12px 10px; display: grid; gap: 8px; border: 1px solid; border-color: var(--vg-lo) var(--vg-hi) var(--vg-hi) var(--vg-lo); }
+.m-field { display: grid; grid-template-columns: minmax(0, 1fr) 182px; gap: 10px; align-items: center; }
+.m-field label { min-width: 0; }
+.m-field.dim label { color: var(--vg-dim); }
+.menu input[type=number], .menu input[type=text], .menu select { width: 100%; box-sizing: border-box; height: 21px; background: var(--vg-field); color: var(--vg-text); font: 12px var(--vg-font); padding: 1px 5px; border: 1px solid; border-color: var(--vg-lo) var(--vg-hi) var(--vg-hi) var(--vg-lo); border-radius: 0; outline: none; }
+.menu input:disabled, .menu select:disabled { color: var(--vg-dim); }
+.menu input[readonly] { color: var(--vg-dim); }
+.menu select { appearance: none; -webkit-appearance: none; padding-right: 22px; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--vg-text) 50%), linear-gradient(-45deg, transparent 50%, var(--vg-text) 50%), linear-gradient(var(--vg-bg), var(--vg-bg));
+  background-size: 4px 4px, 4px 4px, 17px 100%; background-position: right 9px center, right 5px center, right 0 center; background-repeat: no-repeat; }
+.menu select option { background: var(--vg-field); color: var(--vg-text); }
+.menu input[type=number]::-webkit-inner-spin-button { opacity: .5; }
+.m-check { display: flex; gap: 9px; align-items: center; cursor: pointer; padding: 2px 0; }
+.m-check input { appearance: none; -webkit-appearance: none; width: 13px; height: 13px; margin: 0; flex: none; background: var(--vg-field); border: 1px solid; border-color: var(--vg-lo) var(--vg-hi) var(--vg-hi) var(--vg-lo); display: grid; place-items: center; cursor: pointer; }
+.m-check input:checked::after { content: ""; width: 7px; height: 7px; background: var(--vg-text); }
+.m-note { color: var(--vg-dim); font-size: 11px; padding-top: 2px; }
+.m-sep { height: 0; border-top: 1px solid var(--vg-lo); border-bottom: 1px solid var(--vg-hi); margin: 2px 0; }
+.m-foot { display: flex; gap: 8px; align-items: center; padding: 10px; }
+.m-foot .sp { flex: 1; }
+.m-btn { min-width: 74px; background: var(--vg-bg); color: var(--vg-text); font: 12px var(--vg-font); text-align: left; padding: 3px 9px 4px; border: 1px solid; border-color: var(--vg-hi) var(--vg-lo) var(--vg-lo) var(--vg-hi); border-radius: 0; }
+.m-btn:hover { color: #fff; }
+.m-btn:active { border-color: var(--vg-lo) var(--vg-hi) var(--vg-hi) var(--vg-lo); padding: 4px 8px 3px 10px; }
+.m-btn.default { box-shadow: 0 0 0 1px #15170f; }
+.menu :focus-visible { outline: 1px dotted var(--vg-text); outline-offset: -4px; }
+.menu .m-x:focus-visible { outline-offset: -3px; }
 .m-btn.danger { background: #6d120c; border-color: #ff5c4a; color: #fff; font: 500 22px var(--font-hud); letter-spacing: .06em; padding: 6px 20px 2px; text-transform: uppercase; }
 .m-btn.danger:hover { background: #8c1a12; }
 .board.scribbled::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(-32deg, transparent 0 22px, rgba(184,50,42,.6) 22px 27px), repeating-linear-gradient(28deg, transparent 0 31px, rgba(31,44,110,.45) 31px 35px); }
@@ -206,25 +226,28 @@ body.touch #chat { max-width: calc(100vw - 196px); }
     <div class="s-hint">Wakes you up now.</div>
   </div>
 </div>
-<div class="menu" id="m-break" hidden role="dialog" aria-label="Take a break">
-  <div class="m-title">Take a break</div>
-  <div class="m-sub">Lie down for a while. The alarm wakes you when it's over.</div>
-  <button class="m-opt" data-sleep="5"><span>1</span>5 minutes</button>
-  <button class="m-opt" data-sleep="10"><span>2</span>10 minutes</button>
-  <button class="m-opt" data-sleep="15"><span>3</span>15 minutes</button>
-  <button class="m-opt" data-sleep="20"><span>4</span>20 minutes</button>
-  <button class="m-opt" data-sleep="30"><span>5</span>30 minutes</button>
-  <div class="m-row"><label for="mb-custom">Custom</label><input id="mb-custom" type="number" min="1" max="240" value="45"><span>min</span><button class="m-btn" data-sleep-custom>Sleep</button></div>
-  <button class="m-opt" data-close><span>0</span>Cancel</button>
+<div class="menu" id="m-break" hidden role="dialog" aria-labelledby="mb-title">
+  <div class="m-bar"><span class="m-ico" aria-hidden="true">&#9790;</span><span id="mb-title">Take a Break</span><button class="m-x" data-close aria-label="Close">&#215;</button></div>
+  <div class="m-panel">
+    <div class="m-field"><label for="mb-len">Break length</label>
+      <select id="mb-len"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option><option value="custom">Custom</option></select></div>
+    <div class="m-field dim" id="mb-custom-row"><label for="mb-custom">Custom length (minutes)</label><input id="mb-custom" type="number" min="1" max="240" step="1" value="45" disabled></div>
+    <div class="m-sep"></div>
+    <div class="m-note">You lie down and an alarm wakes you when the break ends. "Summon nightmares" wakes you early. Quick picks: keys 1&ndash;5.</div>
+  </div>
+  <div class="m-foot"><span class="sp"></span><button class="m-btn default" data-break-ok>Sleep</button><button class="m-btn" data-close>Cancel</button></div>
 </div>
-<div class="menu" id="m-pomo" hidden role="dialog" aria-label="Pomodoro timer">
-  <div class="m-title">Pomodoro</div>
-  <div class="m-sub">Solve for a set time. When it runs out, you rage-quit to bed for the break. Only time spent working a card at the whiteboard counts.</div>
-  <label class="m-check"><input type="checkbox" id="mp-on"> Pomodoro on</label>
-  <div class="m-row"><label for="mp-focus">Focus</label><input id="mp-focus" type="number" min="1" max="180" value="25"><span>min of solving</span></div>
-  <div class="m-row"><label for="mp-rest">Break</label><input id="mp-rest" type="number" min="1" max="120" value="5"><span>min in bed</span></div>
-  <div class="m-sub" id="mp-status"></div>
-  <div class="m-row"><button class="m-btn" data-pomo-save>Save</button><button class="m-btn" data-pomo-reset>Reset timer</button><button class="m-btn" data-close>Close</button></div>
+<div class="menu" id="m-pomo" hidden role="dialog" aria-labelledby="mp-title">
+  <div class="m-bar"><span class="m-ico" aria-hidden="true">&#9719;</span><span id="mp-title">Pomodoro Timer</span><button class="m-x" data-close aria-label="Close">&#215;</button></div>
+  <div class="m-panel">
+    <label class="m-check"><input type="checkbox" id="mp-on"> Pomodoro enabled</label>
+    <div class="m-field"><label for="mp-focus">Focus time (minutes of solving)</label><input id="mp-focus" type="number" min="1" max="180" step="1" value="25"></div>
+    <div class="m-field"><label for="mp-rest">Break time (minutes in bed)</label><input id="mp-rest" type="number" min="1" max="120" step="1" value="5"></div>
+    <div class="m-field"><label for="mp-status">Solved this cycle</label><input id="mp-status" type="text" readonly value="0:00 / 25:00"></div>
+    <div class="m-sep"></div>
+    <div class="m-note">Only time spent working a card at the whiteboard counts. When focus time runs out, you rage-quit to bed for the break.</div>
+  </div>
+  <div class="m-foot"><button class="m-btn" data-pomo-reset>Reset timer</button><span class="sp"></span><button class="m-btn default" data-pomo-save>OK</button><button class="m-btn" data-close>Cancel</button></div>
 </div>
 <div id="pad" hidden>
   <span></span><button data-k="w" aria-label="Forward">&#9650;</button><span></span>
@@ -802,7 +825,7 @@ function updatePrompt() {
 const daysLeft = () => Math.max(0, Math.ceil((EXAM_DATE - startOfDay()) / DAY));
 function interact(a) {
   if (a === "board") enterBoard();
-  else if (a === "bed") openMenu("m-break");
+  else if (a === "bed") openBreak();
   else if (a === "clock") openPomo();
   else if (a === "laptop") location.href = "index.html";
   else if (a === "calendar") chat("Calendar", daysLeft() + " days until the selection exam on 11 March 2027.");
@@ -936,11 +959,27 @@ document.querySelectorAll(".menu").forEach(m => m.addEventListener("click", ev =
   const b = ev.target.closest("button"); if (!b) return;
   const d = b.dataset;
   if (d.close !== undefined) closeMenus();
-  else if (d.sleep) startSleep(+d.sleep, "break");
-  else if (d.sleepCustom !== undefined) { const v = Math.round(+$("mb-custom").value); if (v >= 1 && v <= 240) startSleep(v, "break"); else $("mb-custom").focus(); }
+  else if (d.breakOk !== undefined) breakOk();
   else if (d.pomoSave !== undefined) savePomo();
   else if (d.pomoReset !== undefined) { focusMs = 0; storeFocus(); renderPomoStatus(); }
 }));
+
+function syncBreakCustom() {
+  const custom = $("mb-len").value === "custom";
+  $("mb-custom").disabled = !custom; $("mb-custom-row").classList.toggle("dim", !custom);
+}
+$("mb-len").addEventListener("change", () => { syncBreakCustom(); if ($("mb-len").value === "custom") $("mb-custom").focus(); });
+function openBreak() {
+  try { const v = localStorage.getItem("dorm-break-len"); if (v) $("mb-len").value = v; const c = localStorage.getItem("dorm-break-custom"); if (c) $("mb-custom").value = c; } catch (e) {}
+  syncBreakCustom(); openMenu("m-break"); $("mb-len").focus();
+}
+function breakOk() {
+  const sel = $("mb-len").value;
+  const v = sel === "custom" ? Math.round(+$("mb-custom").value) : +sel;
+  if (!(v >= 1 && v <= 240)) { $("mb-custom").focus(); return; }
+  try { localStorage.setItem("dorm-break-len", sel); if (sel === "custom") localStorage.setItem("dorm-break-custom", String(v)); } catch (e) {}
+  startSleep(v, "break");
+}
 
 /* ================= Sound (Web Audio, tiny synth blips; off-able) ================= */
 let soundOn = true, actx = null;
@@ -1029,7 +1068,7 @@ function openPomo() {
 }
 function renderPomoStatus() {
   const p = pomo();
-  $("mp-status").textContent = p.on ? `Solving so far this cycle: ${mmss(focusMs)} of ${p.focus}:00.` : "Off. Turn it on to get a focus timer in the HUD.";
+  $("mp-status").value = p.on ? `${mmss(focusMs)} / ${p.focus}:00` : "Off";
 }
 function savePomo() {
   const f = Math.round(+$("mp-focus").value), r = Math.round(+$("mp-rest").value);
@@ -1098,6 +1137,7 @@ addEventListener("keydown", e => {
   const k = e.key.toLowerCase();
   if (e.key === "Escape") { if (menuOpen()) closeMenus(); else if (mode === "board") leaveBoard(); return; }
   if (menuOpen()) {
+    if (e.key === "Enter" && e.target.tagName !== "BUTTON") { e.preventDefault(); if (!$("m-break").hidden) breakOk(); else savePomo(); return; }
     if ($("m-break").hidden === false && /^[0-5]$/.test(k) && e.target.tagName !== "INPUT") {
       e.preventDefault();
       if (k === "0") closeMenus(); else startSleep([5, 10, 15, 20, 30][+k - 1], "break");
