@@ -23,11 +23,13 @@ html{-webkit-text-size-adjust:100%} body{margin:0} img{max-width:100%} [hidden]{
   --ink-red: #b8322a;
   --ink-green: #1d7a3b;
   --board: #f3f4ef;
+  --xh: #57ff57;
   --font-hud: "Teko", "Arial Narrow", Impact, sans-serif;
   --font-marker: "Patrick Hand", "Comic Sans MS", "Segoe Print", cursive;
   --font-ui: "IBM Plex Sans", system-ui, sans-serif;
   color-scheme: dark;
 }
+[hidden] { display: none !important; }
 html, body { height: 100%; background: var(--void); color: #e8e2d0; overflow: hidden; }
 body { font: 14px/1.4 var(--font-ui); }
 #stage { position: fixed; inset: 0; }
@@ -122,6 +124,51 @@ body.at-board #chat { opacity: 0; }
 .tbtn { font: 500 13px var(--font-ui); background: rgba(0,0,0,.55); border: 1px solid rgba(255,173,31,.35); color: #f3e9cf; padding: 6px 11px; border-radius: 3px; text-decoration: none; }
 .tbtn:hover { border-color: var(--hud); color: #fff; }
 #status { position: fixed; z-index: 4; right: 14px; top: 14px; font: 12px var(--font-ui); color: rgba(243,233,207,.6); }
+/* Crosshair, use prompt, focus timer */
+#xhair { position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; pointer-events: none; z-index: 3; display: none;
+  background: linear-gradient(var(--xh), var(--xh)) 50% 0 / 2px 7px no-repeat, linear-gradient(var(--xh), var(--xh)) 50% 100% / 2px 7px no-repeat,
+              linear-gradient(var(--xh), var(--xh)) 0 50% / 7px 2px no-repeat, linear-gradient(var(--xh), var(--xh)) 100% 50% / 7px 2px no-repeat; }
+body.walking #xhair { display: block; }
+#prompt { position: fixed; z-index: 3; left: 50%; top: calc(50% + 22px); transform: translateX(-50%); pointer-events: none; font: 500 13px var(--font-ui); color: #f3e9cf; background: rgba(0,0,0,.5); padding: 4px 9px; border-radius: 3px; white-space: nowrap; }
+#prompt.far { color: rgba(243,233,207,.6); }
+#pomo { left: 50%; top: 10px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; background: var(--hud-bg); padding: 2px 12px 0; border-radius: 3px; }
+#pomo .lab { font-size: 16px; letter-spacing: .12em; color: var(--hud-dim); }
+#pomo .pt { font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+#pomo .pbar { width: 90px; height: 4px; background: var(--hud-dim); }
+#pomo .pbar b { display: block; height: 100%; width: 0; background: var(--hud); }
+#pomo.hot .pt, #pomo.hot .pbar b { color: var(--bad); background-color: var(--bad); }
+#pomo.hot .pt { background: none; }
+/* Rage flash, sleep screen, menus */
+#flash { position: fixed; inset: 0; z-index: 7; pointer-events: none; opacity: 0; }
+#sleep { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; opacity: 0; transition: opacity 1.2s;
+  background: radial-gradient(ellipse at 50% 45%, rgba(10,14,34,.55), rgba(2,3,8,.93) 70%); }
+#sleep.on { opacity: 1; }
+.s-box { text-align: center; display: grid; gap: 6px; justify-items: center; padding: 0 16px; }
+.z { font: 500 34px var(--font-hud); letter-spacing: .3em; color: #9fb3ff; }
+.s-why { font: 15px var(--font-ui); color: #cfd6ea; max-width: 46ch; }
+.s-time { font: 500 120px/1 var(--font-hud); color: var(--hud); font-variant-numeric: tabular-nums; }
+.s-sub { font: 13px var(--font-ui); color: rgba(207,214,234,.7); margin-bottom: 12px; }
+.s-hint { font: 12px var(--font-ui); color: rgba(207,214,234,.55); }
+.menu { position: fixed; z-index: 8; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(430px, calc(100vw - 32px)); background: rgba(16,14,9,.93); border: 1px solid rgba(255,173,31,.5); padding: 16px 18px 18px; color: #f3e9cf; font: 14px/1.45 var(--font-ui); box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+.m-title { font: 500 30px/1 var(--font-hud); color: var(--hud); letter-spacing: .08em; text-transform: uppercase; }
+.m-sub { color: rgba(243,233,207,.72); margin: 6px 0 10px; font-size: 13px; }
+.m-opt { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 6px 6px; font: 15px var(--font-ui); color: #f3e9cf; border-radius: 2px; }
+.m-opt span { display: inline-block; width: 22px; color: var(--hud); font-weight: 600; }
+.m-opt:hover, .m-opt:focus-visible { background: rgba(255,173,31,.14); }
+.m-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.m-row label { min-width: 52px; color: var(--hud); }
+.menu input[type=number] { width: 70px; background: #0b0a06; border: 1px solid rgba(255,173,31,.4); color: #f3e9cf; padding: 5px 7px; font: inherit; }
+.m-check { display: flex; gap: 8px; align-items: center; color: #f3e9cf; }
+.m-btn { background: rgba(255,173,31,.14); border: 1px solid rgba(255,173,31,.45); color: #f3e9cf; padding: 6px 12px; font: 500 14px var(--font-ui); border-radius: 2px; }
+.m-btn:hover { background: rgba(255,173,31,.26); }
+.m-btn.danger { background: #6d120c; border-color: #ff5c4a; color: #fff; font: 500 22px var(--font-hud); letter-spacing: .06em; padding: 6px 20px 2px; text-transform: uppercase; }
+.m-btn.danger:hover { background: #8c1a12; }
+.board.scribbled::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(-32deg, transparent 0 22px, rgba(184,50,42,.6) 22px 27px), repeating-linear-gradient(28deg, transparent 0 31px, rgba(31,44,110,.45) 31px 35px); }
+#pad { position: fixed; z-index: 4; right: 12px; bottom: 74px; display: grid; grid-template-columns: repeat(3, 48px); gap: 6px; touch-action: none; user-select: none; }
+#pad[hidden] { display: none; }
+#pad button { height: 48px; background: rgba(0,0,0,.45); border: 1px solid var(--hud-dim); color: var(--hud); font: 500 20px var(--font-hud); border-radius: 4px; touch-action: none; }
+body.asleep #hud-c, body.asleep #killfeed { opacity: .25; }
+body.touch #chat { max-width: calc(100vw - 196px); }
 #loading { position: fixed; inset: 0; z-index: 10; background: var(--void); display: grid; place-items: center; font: 15px ui-monospace, Menlo, monospace; color: var(--hud); }
 #loading p { margin: 0; }
 @media (max-width: 640px) {
@@ -139,11 +186,51 @@ body.at-board #chat { opacity: 0; }
   <button class="tbtn" id="back" hidden>&larr; Step back <span style="opacity:.6">(Esc)</span></button>
   <a class="tbtn" href="index.html">2D mode</a>
   <button class="tbtn" id="retro" aria-pressed="true">Retro pixels: on</button>
+  <button class="tbtn" id="sound" aria-pressed="true">Sound: on</button>
 </div>
 <div id="status"></div>
 <div id="killfeed"></div>
 <div id="chat"></div>
 <div id="tip" hidden></div>
+<div id="xhair" aria-hidden="true"></div>
+<div id="prompt" hidden></div>
+<div class="hud" id="pomo" hidden><span class="lab">FOCUS</span><span class="pt" id="pomo-t">0:00</span><span class="lab" id="pomo-of">/ 25:00</span><div class="pbar"><b id="pomo-bar"></b></div></div>
+<div id="flash"></div>
+<div id="sleep" hidden>
+  <div class="s-box">
+    <div class="z">Z z z</div>
+    <div class="s-why" id="s-why"></div>
+    <div class="s-time" id="s-time">00:00</div>
+    <div class="s-sub" id="s-sub"></div>
+    <button class="m-btn danger" id="nightmare">Summon nightmares</button>
+    <div class="s-hint">Wakes you up now.</div>
+  </div>
+</div>
+<div class="menu" id="m-break" hidden role="dialog" aria-label="Take a break">
+  <div class="m-title">Take a break</div>
+  <div class="m-sub">Lie down for a while. The alarm wakes you when it's over.</div>
+  <button class="m-opt" data-sleep="5"><span>1</span>5 minutes</button>
+  <button class="m-opt" data-sleep="10"><span>2</span>10 minutes</button>
+  <button class="m-opt" data-sleep="15"><span>3</span>15 minutes</button>
+  <button class="m-opt" data-sleep="20"><span>4</span>20 minutes</button>
+  <button class="m-opt" data-sleep="30"><span>5</span>30 minutes</button>
+  <div class="m-row"><label for="mb-custom">Custom</label><input id="mb-custom" type="number" min="1" max="240" value="45"><span>min</span><button class="m-btn" data-sleep-custom>Sleep</button></div>
+  <button class="m-opt" data-close><span>0</span>Cancel</button>
+</div>
+<div class="menu" id="m-pomo" hidden role="dialog" aria-label="Pomodoro timer">
+  <div class="m-title">Pomodoro</div>
+  <div class="m-sub">Solve for a set time. When it runs out, you rage-quit to bed for the break. Only time spent working a card at the whiteboard counts.</div>
+  <label class="m-check"><input type="checkbox" id="mp-on"> Pomodoro on</label>
+  <div class="m-row"><label for="mp-focus">Focus</label><input id="mp-focus" type="number" min="1" max="180" value="25"><span>min of solving</span></div>
+  <div class="m-row"><label for="mp-rest">Break</label><input id="mp-rest" type="number" min="1" max="120" value="5"><span>min in bed</span></div>
+  <div class="m-sub" id="mp-status"></div>
+  <div class="m-row"><button class="m-btn" data-pomo-save>Save</button><button class="m-btn" data-pomo-reset>Reset timer</button><button class="m-btn" data-close>Close</button></div>
+</div>
+<div id="pad" hidden>
+  <span></span><button data-k="w" aria-label="Forward">&#9650;</button><span></span>
+  <button data-k="a" aria-label="Left">&#9664;</button><button data-k="use">USE</button><button data-k="d" aria-label="Right">&#9654;</button>
+  <span></span><button data-k="s" aria-label="Back">&#9660;</button><span></span>
+</div>
 <div class="hud" id="hud-bl">
   <div class="hv"><span class="ico">&#10010;</span><span class="num" id="h-due">0</span><span class="lab">DUE</span></div>
   <div class="hv"><span class="ico">&#9670;</span><span class="num" id="h-new">0</span><span class="lab">NEW</span></div>
@@ -432,10 +519,10 @@ for (const lx of [DESK.x0 + 0.04, DESK.x1 - 0.04]) for (const lz of [Z0 + 0.06, 
 box(0.42, 0.62, 0.62, M.wood, DESK.x1 - 0.26, 0, dcz, { ts: 0.6 });
 box(0.36, 0.02, 0.01, M.dark, DESK.x1 - 0.26, 0.48, dcz + 0.315); box(0.36, 0.02, 0.01, M.dark, DESK.x1 - 0.26, 0.22, dcz + 0.315);
 // chair (faces north)
-const cx0 = -0.5, cz0 = -1.55;
-box(0.46, 0.06, 0.44, M.seat, cx0, 0.44, cz0);
-box(0.46, 0.42, 0.05, M.seat, cx0, 0.52, cz0 + 0.22);
-for (const lx of [-0.2, 0.2]) for (const lz of [-0.19, 0.19]) box(0.03, 0.44, 0.03, M.dark, cx0 + lx, 0, cz0 + lz);
+const chair = new THREE.Group(); chair.position.set(-0.5, 0, -1.55); scene.add(chair);
+box(0.46, 0.06, 0.44, M.seat, 0, 0.44, 0, { parent: chair });
+box(0.46, 0.42, 0.05, M.seat, 0, 0.52, 0.22, { parent: chair });
+for (const lx of [-0.2, 0.2]) for (const lz of [-0.19, 0.19]) box(0.03, 0.44, 0.03, M.dark, lx, 0, lz, { parent: chair });
 // laptop (open)
 const lap = new THREE.Group(); lap.position.set(-0.3, DESK.h, Z0 + 0.36); scene.add(lap);
 box(0.34, 0.018, 0.23, M.dark, 0, 0, 0, { parent: lap });
@@ -455,7 +542,7 @@ cyl(0.04, 0.036, 0.09, 8, M.red, 0.05, DESK.h, Z0 + 0.45);
 cyl(0.13, 0.11, 0.32, 8, M.dark, 0.6, 0, Z0 + 0.25);
 // wall calendar (left of the board) and clock (right, above the shelf)
 const cal = plane(0.32, 0.4, M.calendar, -1.45, 1.62, Z0 + 0.012); clickable(cal, "calendar", "Calendar: days to the exam");
-const clk = plane(0.28, 0.28, M.clock, 1.78, 2.25, Z0 + 0.012); clickable(clk, "clock", "Clock");
+const clk = plane(0.28, 0.28, M.clock, 1.78, 2.25, Z0 + 0.012); clickable(clk, "clock", "Clock: Pomodoro timer");
 // bookshelf, east wall north corner
 const SH = { x: X1 - 0.16, z0: -2.35, z1: -1.55, h: 1.75 };
 const shz = (SH.z0 + SH.z1) / 2, shd = SH.z1 - SH.z0;
@@ -476,6 +563,8 @@ box(0.04, 0.55, 0.04, M.dark, BED.x - 0.45, 0.3, BED.z0 + 0.03); box(0.04, 0.55,
 box(0.92, 0.17, bl - 0.06, M.fabric, BED.x, 0.38, bz);
 box(0.98, 0.06, bl * 0.66, M.plaid, BED.x, 0.53, BED.z1 - bl * 0.33 - 0.03, { ts: 0.5 });
 box(0.6, 0.12, 0.34, M.fabric, BED.x, 0.55, BED.z0 + 0.25);
+const bedHit = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.5, bl), new THREE.MeshBasicMaterial({ visible: false }));
+bedHit.position.set(BED.x, 0.4, bz); scene.add(bedHit); clickable(bedHit, "bed", "Bed: take a break");
 // poster above the bed, mini fridge north of the bed
 plane(0.55, 0.82, M.poster, X0 + 0.012, 1.55, 1.35, 0, Math.PI / 2);
 box(0.5, 0.82, 0.5, M.fridge, X0 + 0.3, 0, -0.2);
@@ -483,7 +572,7 @@ box(0.02, 0.25, 0.03, M.dark, X0 + 0.56, 0.45, -0.38);
 box(0.44, 0.26, 0.34, M.dark, X0 + 0.3, 0.82, -0.22);
 // rug and door
 const rug = plane(1.6, 1.1, M.rug, 0.15, 0.004, 0.25, -Math.PI / 2, 0);
-box(0.9, 2.05, 0.05, M.door, 1.25, 0, Z1 - 0.025, { cast: false });
+clickable(box(0.9, 2.05, 0.05, M.door, 1.25, 0, Z1 - 0.025, { cast: false }), "door", "Door");
 cyl(0.025, 0.025, 0.06, 6, M.metal, 0.9, 1.0, Z1 - 0.07, { rz: Math.PI / 2 });
 
 /* ================= Lights (warm, hard-edged) ================= */
@@ -517,44 +606,85 @@ board3d.style.pointerEvents = "none"; // CSS3DObject sets it to auto inline; cli
 boardObj.position.set(BOARD.x * K, BOARD.y * K, BOARD.z * K);
 cssScene.add(boardObj);
 
-/* ================= Camera poses and transitions ================= */
+/* ================= Player and camera ================= */
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
-const POSE = { overview: { pos: V3(1.25, 1.66, 2.15), look: V3(-0.35, 1.15, -1.2) } };
-const POSE_TALL = { pos: V3(0.9, 1.6, 2.2), look: V3(0.25, 1.3, -1.6) };
-const overviewPose = () => (innerWidth < innerHeight ? POSE_TALL : POSE.overview);
+const EYE = 1.62, PR = 0.22, USE_RANGE = 3.0;
+const player = { x: 1.0, z: 1.6, yaw: 0, pitch: -0.08, h: 0, vy: 0 };
+function faceBoard(p) { p.yaw = Math.atan2(-(BOARD.x - p.x), -(BOARD.z - p.z)); }
+faceBoard(player);
+const dirFrom = (yaw, pitch) => V3(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
+let bob = 0;
+function walkPose() {
+  const pos = V3(player.x, EYE + player.h + Math.sin(bob) * 0.02, player.z);
+  return { pos, look: pos.clone().add(dirFrom(player.yaw, player.pitch)) };
+}
 function boardPose() {
   const tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   const dist = Math.max((BOARD.h / 2) / tanH, (BOARD.w / 2) / (tanH * camera.aspect)) * 1.16;
   return { pos: V3(BOARD.x, BOARD.y, BOARD.z + dist), look: V3(BOARD.x, BOARD.y, BOARD.z) };
 }
-let view = "overview";
-const cam = { pos: overviewPose().pos.clone(), look: overviewPose().look.clone(), from: null, to: null, t0: 0, dur: 900 };
-function moveTo(name) {
-  view = name;
-  const to = name === "board" ? boardPose() : overviewPose();
-  cam.from = { pos: cam.pos.clone(), look: cam.look.clone() }; cam.to = to; cam.t0 = performance.now();
-  if (name !== "board") hideOverlay();
-  document.getElementById("back").hidden = name !== "board";
-  document.body.classList.toggle("at-board", name === "board");
-  hideTip();
-  renderBoard();
+const bedPose = () => ({ pos: V3(BED.x, 0.74, BED.z0 + 0.32), look: V3(BED.x + 0.05, 2.6, BED.z0 + 1.45) });
+let mode = "walk"; // walk | board | sleep
+const cam = { pos: walkPose().pos, look: walkPose().look, from: null, to: null, t0: 0, dur: 900, after: null };
+function tweenTo(pose, dur, after) {
+  cam.from = { pos: cam.pos.clone(), look: cam.look.clone() }; cam.to = pose; cam.t0 = performance.now(); cam.dur = dur || 900; cam.after = after || null;
 }
 const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const mouse = { x: 0, y: 0 };
+let shakeUntil = 0, shakeDur = 1;
+function shake(ms) { shakeDur = ms; shakeUntil = performance.now() + ms; }
 function updateCamera(now) {
   if (cam.to) {
     const k = Math.min(1, (now - cam.t0) / cam.dur), e = ease(k);
     cam.pos.lerpVectors(cam.from.pos, cam.to.pos, e); cam.look.lerpVectors(cam.from.look, cam.to.look, e);
-    if (k >= 1) { cam.to = null; if (view === "board") showOverlay(); }
-  }
+    if (k >= 1) { cam.to = null; const a = cam.after; cam.after = null; if (a) a(); }
+  } else if (mode === "walk") { const p = walkPose(); cam.pos.copy(p.pos); cam.look.copy(p.look); }
   camera.position.copy(cam.pos);
-  const look = cam.look.clone();
-  if (view === "overview" && !cam.to) { look.x += mouse.x * 0.35; look.y += -mouse.y * 0.18; }
-  camera.lookAt(look);
+  if (shakeUntil > now) { const a = 0.06 * (shakeUntil - now) / shakeDur; camera.position.x += (Math.random() - 0.5) * a; camera.position.y += (Math.random() - 0.5) * a; }
+  camera.lookAt(cam.look);
   cssCamera.position.copy(camera.position).multiplyScalar(K);
   cssCamera.quaternion.copy(camera.quaternion);
 }
 
+/* ---- walking: WASD / arrows, Shift to walk slowly, Space to jump; simple box collisions ---- */
+const STATIC_COLLIDERS = [
+  [X0, BED.x + 0.5, BED.z0, BED.z1],          // bed
+  [DESK.x0, DESK.x1, Z0, Z0 + DESK.d],         // desk
+  [X0, X0 + 0.55, -0.45, 0.05],                // fridge
+  [SH.x - 0.15, X1, SH.z0, SH.z1],             // bookshelf
+  [X1 - 0.12, X1, -0.5, 0.5],                  // radiator
+  [0.47, 0.73, Z0 + 0.12, Z0 + 0.38]           // bin
+];
+function chairBox() { const c = chair.position; return chair.userData.fallen ? [c.x - 0.25, c.x + 0.25, c.z - 0.25, c.z + 0.75] : [c.x - 0.25, c.x + 0.25, c.z - 0.24, c.z + 0.27]; }
+function blocked(x, z) {
+  if (x < X0 + PR || x > X1 - PR || z < Z0 + PR || z > Z1 - PR) return true;
+  for (const b of STATIC_COLLIDERS.concat([chairBox()])) if (x > b[0] - PR && x < b[1] + PR && z > b[2] - PR && z < b[3] + PR) return true;
+  return false;
+}
+const keys = new Set();
+function movePlayer(dt) {
+  if (mode !== "walk" || cam.to || menuOpen()) { bob *= 0.9; return; }
+  let f = 0, r = 0;
+  if (keys.has("w") || keys.has("arrowup")) f += 1;
+  if (keys.has("s") || keys.has("arrowdown")) f -= 1;
+  if (keys.has("d") || keys.has("arrowright")) r += 1;
+  if (keys.has("a") || keys.has("arrowleft")) r -= 1;
+  const speed = keys.has("shift") ? 1.1 : 2.2;
+  const len = Math.hypot(f, r);
+  if (len) {
+    f /= len; r /= len;
+    const sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
+    const dx = (-sy * f + cy * r) * speed * dt, dz = (-cy * f - sy * r) * speed * dt;
+    if (!blocked(player.x + dx, player.z)) player.x += dx;
+    if (!blocked(player.x, player.z + dz)) player.z += dz;
+    if (player.h === 0) bob += dt * (keys.has("shift") ? 6 : 10);
+  } else bob *= 0.85;
+  if (keys.has(" ") && player.h === 0 && player.vy === 0) player.vy = 3.0;
+  if (player.vy || player.h) { player.h += player.vy * dt; player.vy -= 9.81 * dt; if (player.h <= 0) { player.h = 0; player.vy = 0; } }
+}
+function lookBy(dx, dy) { player.yaw -= dx * 0.0024; player.pitch = Math.max(-1.35, Math.min(1.35, player.pitch - dy * 0.0024)); }
+
+/* ---- whiteboard overlay placement ---- */
 function boardRect() {
   const a = V3(BOARD.x - BOARD.w / 2, BOARD.y + BOARD.h / 2, BOARD.z).project(camera);
   const b = V3(BOARD.x + BOARD.w / 2, BOARD.y - BOARD.h / 2, BOARD.z).project(camera);
@@ -573,8 +703,30 @@ function placeOverlay() {
   const r = boardRect();
   board2d.style.transform = `translate(${r.x}px, ${r.y}px) scale(${r.w / PX})`;
 }
-function showOverlay() { placeOverlay(); board2d.hidden = false; boardObj.visible = false; }
+function showOverlay() { if (mode !== "board") return; placeOverlay(); board2d.hidden = false; boardObj.visible = false; }
 function hideOverlay() { board2d.hidden = true; boardObj.visible = true; }
+
+/* ---- mode changes ---- */
+function setModeClass() {
+  document.body.classList.toggle("at-board", mode === "board");
+  document.body.classList.toggle("walking", mode === "walk");
+  document.body.classList.toggle("asleep", mode === "sleep");
+  $("back").hidden = mode !== "board";
+}
+function pauseCard() { const c = session && session.cur; if (c && c.picked === null && !c.pausedAt) c.pausedAt = performance.now(); }
+function resumeCard() { const c = session && session.cur; if (c && c.pausedAt) { c.start += performance.now() - c.pausedAt; c.pausedAt = 0; } }
+function enterBoard() {
+  if (mode !== "walk" || cam.to) return;
+  releaseLock(); closeMenus(); hideTip();
+  mode = "board"; setModeClass(); resumeCard(); renderBoard();
+  tweenTo(boardPose(), 900, showOverlay);
+}
+function leaveBoard() {
+  if (mode !== "board") return;
+  hideOverlay(); pauseCard();
+  mode = "walk"; setModeClass(); renderBoard();
+  tweenTo(walkPose(), 800);
+}
 
 /* ================= Resize ================= */
 function resize() {
@@ -585,44 +737,79 @@ function resize() {
   renderer.setSize(Math.max(1, Math.round(w * s)), Math.max(1, Math.round(h * s)), false);
   renderer.domElement.style.width = w + "px"; renderer.domElement.style.height = h + "px";
   cssR.setSize(w, h);
-  if (view === "overview" && !cam.to) { const p = overviewPose(); cam.pos.copy(p.pos); cam.look.copy(p.look); }
-  if (view === "board") { const p = boardPose(); if (cam.to) cam.to = p; else { cam.pos.copy(p.pos); cam.look.copy(p.look); updateCamera(performance.now()); placeOverlay(); } }
+  if (mode === "board") { const p = boardPose(); if (cam.to) cam.to = p; else { cam.pos.copy(p.pos); cam.look.copy(p.look); updateCamera(performance.now()); placeOverlay(); } }
 }
 addEventListener("resize", resize);
 const retroBtn = document.getElementById("retro");
 function setRetro(on) { retro = on; retroBtn.textContent = "Retro pixels: " + (on ? "on" : "off"); retroBtn.setAttribute("aria-pressed", on); try { localStorage.setItem("dorm-retro", on ? "on" : "off"); } catch (e) {} resize(); }
 retroBtn.addEventListener("click", () => setRetro(!retro));
-document.getElementById("back").addEventListener("click", () => moveTo("overview"));
+document.getElementById("back").addEventListener("click", () => leaveBoard());
 
-/* ================= Picking ================= */
+/* ================= Mouse look, picking, interaction ================= */
+const $ = id => document.getElementById(id);
+const canvas = renderer.domElement;
+const coarse = matchMedia("(pointer: coarse)").matches;
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-const tip = document.getElementById("tip");
-function hideTip() { tip.hidden = true; renderer.domElement.style.cursor = ""; }
-function pick(ev) {
-  ndc.set(ev.clientX / innerWidth * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
-  ray.setFromCamera(ndc, camera);
-  const hit = ray.intersectObjects(clickables, false)[0];
-  return hit ? hit.object : null;
+const tip = $("tip");
+let locked = false, lockWarned = false;
+function requestLock() {
+  if (coarse || !canvas.requestPointerLock) return;
+  try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(lockFailed); } catch (e) { lockFailed(); }
 }
+function lockFailed() { if (!lockWarned) { lockWarned = true; chat("Tip", "Mouse capture isn't available here. Drag with the mouse to look around."); } }
+function releaseLock() { if (document.pointerLockElement) document.exitPointerLock(); }
+document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === canvas; document.body.classList.toggle("locked", locked); if (locked) hideTip(); });
+document.addEventListener("pointerlockerror", lockFailed);
+function hideTip() { tip.hidden = true; canvas.style.cursor = ""; }
+function hitAt(nx, ny) {
+  ndc.set(nx, ny); ray.setFromCamera(ndc, camera);
+  const h = ray.intersectObjects(clickables, false)[0];
+  return h ? { obj: h.object, dist: h.distance } : null;
+}
+const pickAtEvent = ev => hitAt(ev.clientX / innerWidth * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
+let drag = null, dragMoved = 0;
+canvas.addEventListener("pointerdown", ev => { drag = { x: ev.clientX, y: ev.clientY }; dragMoved = 0; });
+addEventListener("pointerup", () => { drag = null; });
 addEventListener("pointermove", ev => {
   mouse.x = ev.clientX / innerWidth * 2 - 1; mouse.y = ev.clientY / innerHeight * 2 - 1;
-  if (ev.target !== renderer.domElement || view !== "overview") { if (ev.target === renderer.domElement) hideTip(); return; }
-  const o = pick(ev);
-  if (o) { tip.hidden = false; tip.textContent = o.userData.label; tip.style.left = ev.clientX + "px"; tip.style.top = ev.clientY + "px"; renderer.domElement.style.cursor = "pointer"; }
+  if (locked) { if (mode === "walk" && !cam.to && !menuOpen()) lookBy(ev.movementX || 0, ev.movementY || 0); return; }
+  if (drag && mode === "walk" && !cam.to && !menuOpen()) {
+    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    dragMoved += Math.abs(dx) + Math.abs(dy); drag.x = ev.clientX; drag.y = ev.clientY;
+    if (dragMoved > 4) { lookBy(dx * 1.3, dy * 1.3); hideTip(); return; }
+  }
+  if (ev.target !== canvas || mode !== "walk") { if (ev.target === canvas) hideTip(); return; }
+  const t = pickAtEvent(ev);
+  if (t) { tip.hidden = false; tip.textContent = t.obj.userData.label; tip.style.left = ev.clientX + "px"; tip.style.top = ev.clientY + "px"; canvas.style.cursor = "pointer"; }
   else hideTip();
 });
-renderer.domElement.addEventListener("click", ev => {
-  const o = pick(ev);
-  if (!o) return;
-  const a = o.userData.action;
-  if (a === "board") moveTo("board");
-  else if (a === "laptop") location.href = "index.html";
-  else if (a === "calendar") { const d = Math.max(0, Math.ceil((EXAM_DATE - startOfDay()) / DAY)); chat("Calendar", d + " days until the selection exam on 11 March 2027."); }
-  else if (a === "clock") chat("Clock", "It's " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + ". " + (S.day.reviewed ? S.day.reviewed + " cards done today." : "No cards done yet today."));
+canvas.addEventListener("click", ev => {
+  if (mode !== "walk" || cam.to || menuOpen() || dragMoved > 6) return;
+  if (locked) { const t = hitAt(0, 0); if (t && t.dist <= USE_RANGE) interact(t.obj.userData.action); return; }
+  const t = pickAtEvent(ev);
+  if (t) interact(t.obj.userData.action); else requestLock();
 });
+function centerTarget() { return hitAt(0, 0); }
+function updatePrompt() {
+  const el = $("prompt");
+  if (mode !== "walk" || cam.to || menuOpen()) { el.hidden = true; return; }
+  const t = centerTarget();
+  if (!t) { el.hidden = true; return; }
+  el.hidden = false;
+  el.textContent = t.dist <= USE_RANGE ? "[E]  " + t.obj.userData.label : t.obj.userData.label + "  (walk closer)";
+  el.classList.toggle("far", t.dist > USE_RANGE);
+}
+const daysLeft = () => Math.max(0, Math.ceil((EXAM_DATE - startOfDay()) / DAY));
+function interact(a) {
+  if (a === "board") enterBoard();
+  else if (a === "bed") openMenu("m-break");
+  else if (a === "clock") openPomo();
+  else if (a === "laptop") location.href = "index.html";
+  else if (a === "calendar") chat("Calendar", daysLeft() + " days until the selection exam on 11 March 2027.");
+  else if (a === "door") chat("Roommate", "The exam's in " + daysLeft() + " days. The door can wait.");
+}
 
 /* ================= HUD, kill feed, chat ================= */
-const $ = id => document.getElementById(id);
 function updateHUD() {
   const k = deckCounts(session ? session.deck : "all");
   $("h-due").textContent = k.due; $("h-new").textContent = Math.min(k.nw, newLeft());
@@ -673,7 +860,7 @@ function renderBoard() {
       <div class="b-title">Tonight's revision</div>
       <div style="font-size:22px;color:#5a6275">Pick a deck. Answer, read the solution, rate yourself.</div>
       <div class="b-decks">${deckRow("all", "Everything")}${deckRow("math", "Maths")}${deckRow("physics", "Physics")}</div>
-      <div class="b-hint">${view === "board" ? "Keys: <kbd>A</kbd>&ndash;<kbd>D</kbd> to answer, <kbd>1</kbd>&ndash;<kbd>4</kbd> to rate, <kbd>Esc</kbd> to step back." : "Click the board to step closer."}</div>`;
+      <div class="b-hint">${mode === "board" ? "Keys: <kbd>A</kbd>&ndash;<kbd>D</kbd> to answer, <kbd>1</kbd>&ndash;<kbd>4</kbd> to rate, <kbd>Esc</kbd> to step back." : "Walk up and press E, or click the board."}</div>`;
   } else if (!session.cur) {
     html = `<div class="b-done"><div class="b-title">Board's clear!</div>
       <div style="font-size:24px">Nothing else is due in this deck right now. ${newLeft() === 0 ? "Today's new-card limit is reached." : ""}</div>
@@ -684,7 +871,7 @@ function renderBoard() {
     if (cur.picked === null) {
       html = `${boardHead(p)}<div class="b-stem">${p.stem}</div>
         <div class="b-choices">${choiceBtns(p, cur.perm, cur)}</div>
-        <div class="b-hint">${view === "board" ? "<kbd>A</kbd>&ndash;<kbd>" + "ABCDE"[p.choices.length - 1] + "</kbd> to answer &middot; <kbd>Esc</kbd> to step back" : "Click the board to step closer."}</div>`;
+        <div class="b-hint">${mode === "board" ? "<kbd>A</kbd>&ndash;<kbd>" + "ABCDE"[p.choices.length - 1] + "</kbd> to answer &middot; <kbd>Esc</kbd> to step back" : "Walk up and press E, or click the board."}</div>`;
     } else {
       const ok = cur.picked === p.answer, def = ok ? (cur.ms <= TARGET * 1000 ? 3 : 2) : 1, c = cs(p.id);
       cur.def = def;
@@ -740,44 +927,246 @@ boardEl.addEventListener("click", ev => {
   else if (d.cram) { session.cram = true; advance(); renderBoard(); }
   else if (d.end) { session = null; renderBoard(); updateHUD(); }
 });
+/* ================= Menus (break, Pomodoro) ================= */
+const MENUS = ["m-break", "m-pomo"];
+const menuOpen = () => MENUS.some(id => !$(id).hidden);
+function openMenu(id) { closeMenus(); releaseLock(); keys.clear(); hideTip(); $(id).hidden = false; const f = $(id).querySelector("button, input"); if (f) f.focus(); }
+function closeMenus() { MENUS.forEach(id => { $(id).hidden = true; }); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
+document.querySelectorAll(".menu").forEach(m => m.addEventListener("click", ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  const d = b.dataset;
+  if (d.close !== undefined) closeMenus();
+  else if (d.sleep) startSleep(+d.sleep, "break");
+  else if (d.sleepCustom !== undefined) { const v = Math.round(+$("mb-custom").value); if (v >= 1 && v <= 240) startSleep(v, "break"); else $("mb-custom").focus(); }
+  else if (d.pomoSave !== undefined) savePomo();
+  else if (d.pomoReset !== undefined) { focusMs = 0; storeFocus(); renderPomoStatus(); }
+}));
+
+/* ================= Sound (Web Audio, tiny synth blips; off-able) ================= */
+let soundOn = true, actx = null;
+try { soundOn = localStorage.getItem("dorm-sound") !== "off"; } catch (e) {}
+const soundBtn = $("sound");
+function setSound(on) { soundOn = on; soundBtn.textContent = "Sound: " + (on ? "on" : "off"); soundBtn.setAttribute("aria-pressed", on); try { localStorage.setItem("dorm-sound", on ? "on" : "off"); } catch (e) {} }
+soundBtn.addEventListener("click", () => setSound(!soundOn));
+function ac() {
+  if (!soundOn) return null;
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); return actx; } catch (e) { return null; }
+}
+function tone(freq, at, dur, type = "square", vol = 0.05, slideTo) {
+  const a = ac(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(), t0 = a.currentTime + at;
+  o.type = type; o.frequency.setValueAtTime(freq, t0); if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+}
+const sfx = {
+  alarm() { for (let i = 0; i < 6; i++) tone(i % 2 ? 1046 : 880, i * 0.18, 0.14, "square", 0.05); },
+  rage() { tone(180, 0, 0.6, "sawtooth", 0.07, 60); tone(90, 0.05, 0.7, "square", 0.05, 45); },
+  nightmare() { tone(55, 0, 1.2, "sawtooth", 0.08, 30); tone(233, 0.1, 0.9, "triangle", 0.04, 220); tone(247, 0.1, 0.9, "triangle", 0.04, 262); },
+  thud() { tone(70, 0, 0.25, "sine", 0.12, 40); }
+};
+function flash(color, ms) {
+  const el = $("flash");
+  el.style.transition = "none"; el.style.background = color; el.style.opacity = "0.7";
+  void el.offsetWidth;
+  el.style.transition = `opacity ${ms}ms ease-out`; el.style.opacity = "0";
+}
+
+/* ================= Sleep: breaks in bed ================= */
+const sleep = { until: 0, reason: "", minutes: 0 };
+const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+function storeSleep() { try { if (sleep.until) localStorage.setItem("dorm-sleep", JSON.stringify(sleep)); else localStorage.removeItem("dorm-sleep"); } catch (e) {} }
+function startSleep(minutes, reason, instant) {
+  closeMenus(); releaseLock(); hideTip();
+  if (mode === "board") { hideOverlay(); pauseCard(); }
+  sleep.until = Date.now() + minutes * 60000; sleep.reason = reason; sleep.minutes = minutes; storeSleep();
+  mode = "sleep"; setModeClass(); renderBoard();
+  const show = () => { $("sleep").hidden = false; $("sleep").classList.add("on"); renderSleep(); };
+  if (instant) { const p = bedPose(); cam.pos.copy(p.pos); cam.look.copy(p.look); show(); }
+  else tweenTo(bedPose(), reason === "pomodoro" ? 1100 : 1300, show);
+  $("s-why").textContent = reason === "pomodoro"
+    ? `Rage-quit after ${plural(pomo().focus, "minute")} of solving. Sleeping it off.`
+    : "Taking a break. The alarm will wake you.";
+  if (!instant) chat("You", reason === "pomodoro" ? "I'm going to bed. Don't talk to me." : "Just resting my eyes for " + plural(minutes, "minute") + ".");
+}
+function renderSleep() {
+  const left = Math.max(0, sleep.until - Date.now()), s = Math.ceil(left / 1000);
+  $("s-time").textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+  $("s-sub").textContent = "Alarm at " + new Date(sleep.until).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+const NIGHTMARES = [
+  "You jolt awake. In the dream every answer was C, and every answer was wrong.",
+  "You wake up in a cold sweat. The integral had no antiderivative and the exam had no end.",
+  "Nightmare: the selection exam started and your calculator was a banana.",
+  "You dreamt the vectors were pointing at you. Awake now.",
+  "In the dream the exam was tomorrow. It isn't. Back to work."
+];
+function wake(kind) {
+  if (mode !== "sleep") return;
+  sleep.until = 0; storeSleep();
+  $("sleep").classList.remove("on"); $("sleep").hidden = true;
+  if (kind === "nightmare") { flash("#5a0000", 1400); shake(900); sfx.nightmare(); chat("Nightmare", NIGHTMARES[Math.floor(Math.random() * NIGHTMARES.length)]); }
+  else { sfx.alarm(); flash("#fff6d8", 900); chat("Alarm", "Break's over. Back to the whiteboard."); }
+  setChairUp();
+  focusMs = 0; storeFocus();
+  player.x = -0.75; player.z = 1.3; player.h = 0; player.vy = 0; faceBoard(player); player.pitch = -0.05;
+  mode = "walk"; setModeClass(); renderBoard();
+  tweenTo(walkPose(), 1000);
+}
+$("nightmare").addEventListener("click", () => wake("nightmare"));
+
+/* ================= Pomodoro: focus while solving, then rage-quit to bed ================= */
+function pomo() { S.settings.pomo = Object.assign({ on: false, focus: 25, rest: 5 }, S.settings.pomo || {}); return S.settings.pomo; }
+let focusMs = 0;
+try { const f = JSON.parse(localStorage.getItem("dorm-focus") || "null"); if (f && f.day === todayKey()) focusMs = f.ms || 0; } catch (e) {}
+let lastFocusStore = 0;
+function storeFocus() { try { localStorage.setItem("dorm-focus", JSON.stringify({ day: todayKey(), ms: focusMs })); } catch (e) {} }
+const mmss = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+function openPomo() {
+  const p = pomo();
+  $("mp-on").checked = p.on; $("mp-focus").value = p.focus; $("mp-rest").value = p.rest;
+  renderPomoStatus(); openMenu("m-pomo");
+}
+function renderPomoStatus() {
+  const p = pomo();
+  $("mp-status").textContent = p.on ? `Solving so far this cycle: ${mmss(focusMs)} of ${p.focus}:00.` : "Off. Turn it on to get a focus timer in the HUD.";
+}
+function savePomo() {
+  const f = Math.round(+$("mp-focus").value), r = Math.round(+$("mp-rest").value);
+  if (!(f >= 1 && f <= 180)) { $("mp-focus").focus(); return; }
+  if (!(r >= 1 && r <= 120)) { $("mp-rest").focus(); return; }
+  const was = pomo().on;
+  Object.assign(pomo(), { on: $("mp-on").checked, focus: f, rest: r });
+  save(); updatePomoHUD(true); closeMenus();
+  chat("Clock", pomo().on ? `Pomodoro set: ${plural(f, "minute")} of solving, then ${plural(r, "minute")} in bed.${was ? "" : " The timer runs while you're working at the whiteboard."}` : "Pomodoro off.");
+}
+let pomoShown = "";
+function updatePomoHUD(force) {
+  const p = pomo(), el = $("pomo");
+  el.hidden = !p.on || mode === "sleep";
+  if (el.hidden) return;
+  const txt = mmss(focusMs);
+  if (txt === pomoShown && !force) return;
+  pomoShown = txt;
+  $("pomo-t").textContent = txt; $("pomo-of").textContent = "/ " + p.focus + ":00";
+  const frac = Math.min(1, focusMs / (p.focus * 60000));
+  $("pomo-bar").style.width = (frac * 100) + "%";
+  el.classList.toggle("hot", frac > 0.9);
+}
+const RAGE = {
+  math: ["AAARGH! If I see one more integral I'm moving to a farm.", "That's it. No more maths. I'm going to bed.", "WHO INVENTED LOGARITHMS?! Bed. Now."],
+  physics: ["AAARGH! Friction can take ME off this chair.", "Enough physics. Gravity wins, I'm lying down.", "If one more block slides down one more slope... bed."]
+};
+function setChairUp() { chair.userData.fallen = false; chair.userData.anim = { from: chair.rotation.x, to: 0, t0: performance.now(), dur: 300 }; }
+function knockChair() { chair.userData.fallen = true; chair.userData.anim = { from: chair.rotation.x, to: 1.45, t0: performance.now(), dur: 420 }; setTimeout(() => sfx.thud(), 380); }
+function rage() {
+  const cur = session && session.cur;
+  if (cur && cur.picked !== null) rate(cur.def || 3); // never lose an answered card
+  const p = cur && BY_ID.get(cur.id);
+  const lines = RAGE[p ? p.subject : "math"];
+  hideOverlay();
+  shake(1300); flash("#b30000", 1100); sfx.rage();
+  chat("You", lines[Math.floor(Math.random() * lines.length)]);
+  boardEl.classList.add("scribbled"); board3d.classList.add("scribbled");
+  knockChair();
+  focusMs = 0; storeFocus();
+  mode = "sleep"; setModeClass(); // block input while the rage plays out
+  setTimeout(() => { boardEl.classList.remove("scribbled"); board3d.classList.remove("scribbled"); mode = "board"; startSleep(pomo().rest, "pomodoro"); }, 1500);
+}
+function animateChair(now) {
+  const a = chair.userData.anim; if (!a) return;
+  const k = Math.min(1, (now - a.t0) / a.dur);
+  chair.rotation.x = a.from + (a.to - a.from) * (k * k);
+  if (k >= 1) chair.userData.anim = null;
+}
+
+/* ================= Touch controls (phones/tablets) ================= */
+if (coarse) {
+  document.body.classList.add("touch");
+  $("pad").hidden = false;
+  $("pad").querySelectorAll("[data-k]").forEach(b => {
+    const k = b.dataset.k;
+    const on = ev => { ev.preventDefault(); if (k === "use") { const t = centerTarget(); if (mode === "walk" && t && t.dist <= USE_RANGE) interact(t.obj.userData.action); } else keys.add(k); };
+    const off = () => keys.delete(k);
+    b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointerleave", off); b.addEventListener("pointercancel", off);
+  });
+}
+
+/* ================= Keyboard ================= */
 addEventListener("keydown", e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.key === "Escape") { if (view === "board") moveTo("overview"); return; }
-  if (view !== "board" || !session || !session.cur) return;
-  const cur = session.cur, p = BY_ID.get(cur.id), k = e.key.toUpperCase();
+  const k = e.key.toLowerCase();
+  if (e.key === "Escape") { if (menuOpen()) closeMenus(); else if (mode === "board") leaveBoard(); return; }
+  if (menuOpen()) {
+    if ($("m-break").hidden === false && /^[0-5]$/.test(k) && e.target.tagName !== "INPUT") {
+      e.preventDefault();
+      if (k === "0") closeMenus(); else startSleep([5, 10, 15, 20, 30][+k - 1], "break");
+    }
+    return;
+  }
+  if (mode === "walk") {
+    if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", " ", "shift"].includes(k)) { keys.add(k); e.preventDefault(); }
+    else if (k === "e") { const t = centerTarget(); if (t && t.dist <= USE_RANGE) interact(t.obj.userData.action); }
+    else if (k === "p") openPomo();
+    return;
+  }
+  if (mode !== "board" || !session || !session.cur) return;
+  const cur = session.cur, p = BY_ID.get(cur.id), K = e.key.toUpperCase();
   if (cur.picked === null) {
-    let i = "ABCDE".indexOf(k); if (i < 0 && /^[1-5]$/.test(k)) i = +k - 1;
+    let i = "ABCDE".indexOf(K); if (i < 0 && /^[1-5]$/.test(K)) i = +K - 1;
     if (i >= 0 && i < p.choices.length) { e.preventDefault(); answer(cur.perm[i]); }
-  } else if (/^[1-4]$/.test(k)) { e.preventDefault(); rate(+k); }
+  } else if (/^[1-4]$/.test(K)) { e.preventDefault(); rate(+K); }
   else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rate(cur.def || 3); }
 });
+addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
+addEventListener("blur", () => keys.clear());
 
 /* ================= Sync hooks, loop, boot ================= */
-onSyncChange = mode => { $("status").textContent = mode === "account" ? "Saved to your account" : mode === "local" ? "Saved in this browser" : ""; };
-onStateReplaced = () => { renderBoard(); updateHUD(); };
+onSyncChange = mode2 => { $("status").textContent = mode2 === "account" ? "Saved to your account" : mode2 === "local" ? "Saved in this browser" : ""; };
+onStateReplaced = () => { renderBoard(); updateHUD(); updatePomoHUD(true); };
 function tickTimer() {
   const el = $("h-timer"), wrap = $("h-timer-wrap");
   const cur = session && session.cur;
-  const ms = !cur ? 0 : cur.picked !== null ? cur.ms : performance.now() - cur.start;
+  const ms = !cur ? 0 : cur.picked !== null ? cur.ms : (cur.pausedAt || performance.now()) - cur.start;
   const s = Math.floor(ms / 1000);
   el.textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
   wrap.classList.toggle("warn", ms > TARGET * 1000);
 }
-let lastClock = 0;
+let lastClock = 0, lastT = performance.now(), lastSleepTick = 0;
 function frame(now) {
+  const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+  movePlayer(dt);
+  animateChair(now);
   updateCamera(now);
   if (now - lastClock > 20000) { drawClock(); lastClock = now; }
   tickTimer();
+  updatePrompt();
+  // Pomodoro: only time spent working a card at the whiteboard counts as solving.
+  if (pomo().on && mode === "board" && !cam.to && session && session.cur && !document.hidden) {
+    focusMs += dt * 1000;
+    if (now - lastFocusStore > 10000) { storeFocus(); lastFocusStore = now; }
+    if (focusMs >= pomo().focus * 60000) rage();
+  }
+  updatePomoHUD();
+  if (mode === "sleep" && sleep.until) { if (now - lastSleepTick > 250) { renderSleep(); lastSleepTick = now; } if (Date.now() >= sleep.until) wake("alarm"); }
   renderer.render(scene, camera);
   cssR.render(cssScene, cssCamera);
   requestAnimationFrame(frame);
 }
 drawCalendar(); drawClock();
-setRetro(retro);
-renderBoard(); updateHUD();
-requestAnimationFrame(t => { frame(t); $("loading").remove(); });
+setRetro(retro); setSound(soundOn);
+setModeClass();
+renderBoard(); updateHUD(); updatePomoHUD(true);
+// Resume a break that was running when the page was closed.
+try {
+  const sv = JSON.parse(localStorage.getItem("dorm-sleep") || "null");
+  if (sv && sv.until > Date.now()) { startSleep((sv.until - Date.now()) / 60000, sv.reason, true); sleep.until = sv.until; sleep.minutes = sv.minutes; storeSleep(); }
+  else if (sv) localStorage.removeItem("dorm-sleep");
+} catch (e) {}
+requestAnimationFrame(t => { lastT = t; frame(t); $("loading").remove(); });
 const k0 = deckCounts("all");
-setTimeout(() => chat("Roommate", `Board's clean. ${k0.due} due and ${Math.min(k0.nw, newLeft())} new cards tonight. Click the whiteboard to start.`), 600);
+setTimeout(() => chat("Roommate", `${k0.due} due and ${Math.min(k0.nw, newLeft())} new cards tonight. Walk to the whiteboard and press E.`), 600);
+setTimeout(() => chat("Controls", coarse ? "Drag to look, use the pad to walk, tap things to use them." : "WASD to walk, click to grab the mouse (or drag to look), E to use. Bed = break, clock = Pomodoro."), 1400);
 connect();
 </script>
 </body>

@@ -13,7 +13,15 @@
 
 ### 3D dorm (`room.html`, beta)
 
-A low-poly dorm room in the style of late-90s shooters: chunky geometry, crunchy 64-pixel textures drawn in code, hard-edged lighting and an amber HUD. The whiteboard runs the same study session as the 2D app. Click the board to walk up to it, answer with A–D, rate with 1–4, and press Esc to step back. The calendar shows the days left until the exam. The laptop opens the 2D app. Progress is shared with the 2D app, because both use `core.js` and the same browser storage. **Retro pixels** switches between the low-resolution look and full resolution.
+A low-poly dorm room in the style of late-90s shooters: chunky geometry, crunchy 64-pixel textures drawn in code, hard-edged lighting and an amber HUD. The whiteboard runs the same study session as the 2D app. Walk around in first person:
+- **Desktop:** WASD or the arrow keys to move, Shift to walk slowly, Space to jump. Click to capture the mouse for mouse-look (or drag to look), and E to use whatever the crosshair points at. You can also click objects directly.
+- **Phones:** drag to look, use the on-screen pad to walk, and tap objects.
+
+At the whiteboard, answer with A–D, rate with 1–4, and press Esc to step back. The calendar shows the days left until the exam.
+
+- **Bed: breaks.** Choose 5–30 minutes or a custom length. You lie down, a countdown runs, and an alarm wakes you. **Summon nightmares** ends the break early. A break that is running survives a page reload.
+- **Clock: Pomodoro.** Set the focus minutes and the break minutes (press P as a shortcut). Focus time only counts while you're working a card at the whiteboard, and it shows at the top of the HUD. When it runs out, the character rage-quits: the board gets scribbled on, the chair gets knocked over, and you go to bed for the break. An answered card is never lost; it gets your suggested rating first.
+- **Sound:** short synth sounds for the alarm, the rage-quit and nightmares. Toggle them with **Sound** in the top bar. The laptop opens the 2D app. Progress is shared with the 2D app, because both use `core.js` and the same browser storage. **Retro pixels** switches between the low-resolution look and full resolution.
 
 It is a static site with no build step and no dependencies to install. MathJax, Three.js and Google Fonts load from CDNs.
 
