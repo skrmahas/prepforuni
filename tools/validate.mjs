@@ -1,11 +1,11 @@
 // Validates the Delft AE Drill problem bank: schema, coverage and numeric answers.
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import vm from "node:vm";
 import path from "node:path";
 
 const appDir = path.resolve(process.argv[2] || "app");
 const ctx = vm.createContext({ Math, Number, Set, Object, String, console });
-for (const f of ["problems-math.js", "problems-physics.js"]) {
+for (const f of readdirSync(appDir).filter((n) => /^problems-.*\.js$/.test(n)).sort()) {
   vm.runInContext(readFileSync(path.join(appDir, f), "utf8"), ctx, { filename: f });
 }
 const P = ctx.PROBLEMS;
@@ -35,11 +35,14 @@ for (const p of P) {
   cover[key] = (cover[key] || 0) + 1;
   // Unbalanced $ delimiters break rendering.
   for (const s of [p.stem, p.solution, ...p.choices]) if (((s.match(/(?<!\\)\$/g) || []).length) % 2) errors.push(`${where}: odd number of $ in "${s.slice(0, 40)}…"`);
+  // A raw < or > inside TeX is parsed as HTML when the card is rendered; use \lt / \gt.
+  for (const s of [p.stem, p.solution, ...p.choices]) for (const m of s.match(/\$[^$]*\$/g) || []) if (/[<>]/.test(m)) errors.push(`${where}: raw < or > inside TeX "${m.slice(0, 40)}"`);
   if (p.vals) {
     if (p.vals.length !== p.choices.length) errors.push(`${where}: vals length mismatch`);
+    // nearOk marks deliberate close traps (e.g. sin vs tan of a small angle).
     const ans = p.vals[p.answer];
     p.vals.forEach((v, i) => {
-      if (i !== p.answer && v != null && ans != null && close(v, ans, 0.02)) errors.push(`${where}: distractor ${i} (${v}) too close to answer (${ans})`);
+      if (!p.nearOk && i !== p.answer && v != null && ans != null && close(v, ans, 0.02)) errors.push(`${where}: distractor ${i} (${v}) too close to answer (${ans})`);
     });
     if (typeof p.check === "function") {
       const c = p.check();

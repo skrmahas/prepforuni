@@ -20,12 +20,12 @@
   q("M1-i-01", 1, VWO, false,
     t`Let $f(x)=\sqrt{x}$ and $g(x)=x^2-4x+4$. Which expression equals $f(g(x))$ for every real $x$?`,
     [t`$x-2$`, t`$|x-2|$`, t`$\sqrt{x}-2$`, t`$x^2-2$`], 1,
-    t`$g(x)=(x-2)^2$, so $f(g(x))=\sqrt{(x-2)^2}=|x-2|$. The square root is never negative, so $x-2$ is wrong for $x<2$.`);
+    t`$g(x)=(x-2)^2$, so $f(g(x))=\sqrt{(x-2)^2}=|x-2|$. The square root is never negative, so $x-2$ is wrong for $x\lt 2$.`);
 
   q("M1-i-02", 2, EN, false,
     t`Let $f(x)=3x-1$ and $g(x)=x^2$. For how many real values of $x$ is $f(g(x))=g(f(x))$?`,
     [t`$0$`, t`$1$`, t`$2$`, t`infinitely many`], 0,
-    t`$f(g(x))=3x^2-1$ and $g(f(x))=(3x-1)^2=9x^2-6x+1$. Setting them equal: $6x^2-6x+2=0 \Rightarrow 3x^2-3x+1=0$. The discriminant is $9-12<0$, so there are no real solutions.`,
+    t`$f(g(x))=3x^2-1$ and $g(f(x))=(3x-1)^2=9x^2-6x+1$. Setting them equal: $6x^2-6x+2=0 \Rightarrow 3x^2-3x+1=0$. The discriminant is $9-12\lt 0$, so there are no real solutions.`,
     { vals: [0, 1, 2, null], check: () => 0 });
 
   q("M1-i-03", 1, PC, false,
@@ -42,7 +42,7 @@
   q("M1-ii-02", 2, VWO, false,
     t`What is the range of $f(x)=\ln(4-x^2)$?`,
     [t`$(-\infty,\ \ln 4]$`, t`$(0,\ \ln 4]$`, t`$(-2,\ 2)$`, t`$[\ln 4,\ \infty)$`], 0,
-    t`The domain is $-2<x<2$. There $0<4-x^2\le 4$, with maximum $4$ at $x=0$. Since $\ln$ is increasing and $\ln u\to-\infty$ as $u\to 0^+$, the range is $(-\infty,\ln 4]$. Option C is the domain, not the range.`);
+    t`The domain is $-2\lt x\lt 2$. There $0\lt 4-x^2\le 4$, with maximum $4$ at $x=0$. Since $\ln$ is increasing and $\ln u\to-\infty$ as $u\to 0^+$, the range is $(-\infty,\ln 4]$. Option C is the domain, not the range.`);
 
   q("M1-ii-03", 1, PC, false,
     t`The graph of $y=e^x$ is shifted 2 units to the right, then stretched vertically by a factor 3, then reflected in the $x$-axis. Which equation results?`,
@@ -88,8 +88,8 @@
 
   q("M2-ii-02", 2, VWO, false,
     t`Solve $\ln x \le 2\ln 3-\ln x$.`,
-    [t`$0<x\le 3$`, t`$x\le 3$`, t`$-3\le x\le 3$`, t`$0<x\le 9$`], 0,
-    t`$2\ln x\le \ln 9 \Rightarrow \ln x^2\le\ln 9 \Rightarrow x^2\le 9$. With the domain $x>0$ of $\ln x$, this gives $0<x\le 3$.`);
+    [t`$0\lt x\le 3$`, t`$x\le 3$`, t`$-3\le x\le 3$`, t`$0\lt x\le 9$`], 0,
+    t`$2\ln x\le \ln 9 \Rightarrow \ln x^2\le\ln 9 \Rightarrow x^2\le 9$. With the domain $x\gt 0$ of $\ln x$, this gives $0\lt x\le 3$.`);
 
   q("M2-ii-03", 3, EN, false,
     t`What is the sum of all real solutions of $4^x-6\cdot 2^x+8=0$?`,
@@ -100,7 +100,7 @@
   q("M2-ii-04", 2, PC, false,
     t`Solve $e^{2x}-5e^{x}+6=0$.`,
     [t`$x=\ln 2$ or $x=\ln 3$`, t`$x=2$ or $x=3$`, t`$x=-\ln 2$ or $x=-\ln 3$`, t`$x=\ln 6$`], 0,
-    t`Let $u=e^x>0$: $u^2-5u+6=(u-2)(u-3)=0$. So $e^x=2$ or $e^x=3$, giving $x=\ln 2$ or $x=\ln 3$.`);
+    t`Let $u=e^x\gt 0$: $u^2-5u+6=(u-2)(u-3)=0$. So $e^x=2$ or $e^x=3$, giving $x=\ln 2$ or $x=\ln 3$.`);
 
   q("M2-iii-01", 1, VWO, false,
     t`Solve $2x^2-7x+3=0$.`,
@@ -114,7 +114,7 @@
 
   q("M2-iii-03", 2, EN, false,
     t`For which values of $k\neq 0$ does $kx^2+4x+k=0$ have exactly one real solution?`,
-    [t`$k=\pm 2$`, t`$k=2$ only`, t`$k=\pm 4$`, t`$-2<k<2$`], 0,
+    [t`$k=\pm 2$`, t`$k=2$ only`, t`$k=\pm 4$`, t`$-2\lt k\lt 2$`], 0,
     t`Exactly one solution means the discriminant is zero: $16-4k^2=0 \Rightarrow k^2=4 \Rightarrow k=\pm2$.`);
 
   q("M2-iv-01", 1, VWO, false,
@@ -166,11 +166,11 @@
 
   q("M3-ii-03", 2, VWO, false,
     t`On which interval is $f(x)=x^4-4x^3$ concave (curving downward)?`,
-    [t`$0<x<2$`, t`$0<x<3$`, t`$x<0$`, t`$x>2$`], 0,
-    t`$f''(x)=12x^2-24x=12x(x-2)$, which is negative exactly when $0<x<2$.`);
+    [t`$0\lt x\lt 2$`, t`$0\lt x\lt 3$`, t`$x\lt 0$`, t`$x\gt 2$`], 0,
+    t`$f''(x)=12x^2-24x=12x(x-2)$, which is negative exactly when $0\lt x\lt 2$.`);
 
   q("M3-ii-04", 3, EN, false,
-    t`What is the maximum value of $f(x)=\dfrac{\ln x}{x}$ for $x>0$?`,
+    t`What is the maximum value of $f(x)=\dfrac{\ln x}{x}$ for $x\gt 0$?`,
     [t`$\dfrac1e$`, t`$e$`, t`$1$`, t`$0$`], 0,
     t`$f'(x)=\dfrac{1-\ln x}{x^2}=0 \Rightarrow x=e$, and $f$ goes from increasing to decreasing there. $f(e)=\dfrac{1}{e}$.`,
     { vals: [1 / E, E, 1, 0], check: () => ln(E) / E });
@@ -308,24 +308,24 @@
     { vals: [sqrt(3) / 3 + 0.5, -sqrt(3) / 3 + 0.5, sqrt(3) / 3 - 0.5, sqrt(3) + 0.5], check: () => Math.tan(7 * PI / 6) + Math.cos(5 * PI / 3) });
 
   q("M5-iii-01", 1, VWO, false,
-    t`Solve $2\sin x=1$ for $0\le x<2\pi$.`,
+    t`Solve $2\sin x=1$ for $0\le x\lt 2\pi$.`,
     [t`$x=\tfrac{\pi}{6}$ or $x=\tfrac{5\pi}{6}$`, t`$x=\tfrac{\pi}{6}$ only`, t`$x=\tfrac{\pi}{3}$ or $x=\tfrac{2\pi}{3}$`, t`$x=\tfrac{\pi}{6}$ or $x=\tfrac{7\pi}{6}$`], 0,
     t`$\sin x=\tfrac12$ gives $x=\tfrac{\pi}{6}$, and by symmetry $x=\pi-\tfrac{\pi}{6}=\tfrac{5\pi}{6}$.`);
 
   q("M5-iii-02", 2, VWO, false,
-    t`How many solutions does $\cos(2x)=\tfrac12$ have for $0\le x<2\pi$?`,
+    t`How many solutions does $\cos(2x)=\tfrac12$ have for $0\le x\lt 2\pi$?`,
     [t`$4$`, t`$2$`, t`$1$`, t`$8$`], 0,
     t`$2x=\pm\tfrac{\pi}{3}+2k\pi \Rightarrow x=\pm\tfrac{\pi}{6}+k\pi$. In $[0,2\pi)$: $\tfrac{\pi}{6},\tfrac{5\pi}{6},\tfrac{7\pi}{6},\tfrac{11\pi}{6}$, which is four solutions. Doubling the argument doubles the number of solutions.`,
     { vals: [4, 2, 1, 8], check: () => { let c = 0; for (let k = -3; k <= 3; k++) for (const s of [1, -1]) { const x = s * PI / 6 + k * PI; if (x >= 0 && x < 2 * PI - 1e-9) c++; } return c; } });
 
   q("M5-iii-03", 3, EN, false,
-    t`How many solutions does $\sin(3x)=\sin\!\left(x+\tfrac{\pi}{2}\right)$ have for $0\le x<\pi$?`,
+    t`How many solutions does $\sin(3x)=\sin\!\left(x+\tfrac{\pi}{2}\right)$ have for $0\le x\lt \pi$?`,
     [t`$3$`, t`$2$`, t`$4$`, t`$6$`], 0,
     t`Case 1: $3x=x+\tfrac{\pi}{2}+2k\pi \Rightarrow x=\tfrac{\pi}{4}+k\pi$, giving $\tfrac{\pi}{4}$. Case 2: $3x=\pi-\left(x+\tfrac{\pi}{2}\right)+2k\pi \Rightarrow x=\tfrac{\pi}{8}+\tfrac{k\pi}{2}$, giving $\tfrac{\pi}{8},\tfrac{5\pi}{8}$. That is 3 solutions in total.`,
     { vals: [3, 2, 4, 6], check: () => { const s = new Set(); for (let k = -4; k <= 4; k++) { for (const x of [PI / 4 + k * PI, PI / 8 + k * PI / 2]) if (x >= -1e-12 && x < PI - 1e-12) s.add(x.toFixed(6)); } return s.size; } });
 
   q("M5-iii-04", 2, PC, false,
-    t`Solve $\tan(2x)=\sqrt3$ for $0\le x<\pi$.`,
+    t`Solve $\tan(2x)=\sqrt3$ for $0\le x\lt \pi$.`,
     [t`$x=\tfrac{\pi}{6}$ or $x=\tfrac{2\pi}{3}$`, t`$x=\tfrac{\pi}{6}$ only`, t`$x=\tfrac{\pi}{3}$ or $x=\tfrac{4\pi}{3}$`, t`$x=\tfrac{\pi}{6}$ or $x=\tfrac{7\pi}{6}$`], 0,
     t`$2x=\tfrac{\pi}{3}+k\pi \Rightarrow x=\tfrac{\pi}{6}+\tfrac{k\pi}{2}$. In $[0,\pi)$: $\tfrac{\pi}{6}$ and $\tfrac{2\pi}{3}$.`);
 
@@ -352,7 +352,7 @@
     t`Equilibrium $a=\tfrac{7+1}{2}=4$, amplitude $b=3$. Half a period is $4-1=3$, so the period is 6 and $c=\tfrac{2\pi}{6}=\tfrac{\pi}{3}$. The sine rises through equilibrium a quarter period (1.5) before the max: $t=-\tfrac12$. So the shift is $t+\tfrac12$.`);
 
   q("M5-v-02", 2, VWO, false,
-    t`The water level in a harbour is $h(t)=2+1.5\sin\!\left(\tfrac{\pi}{6}(t-3)\right)$ m, with $t$ in hours. At what time $t>0$ is the level first at its maximum?`,
+    t`The water level in a harbour is $h(t)=2+1.5\sin\!\left(\tfrac{\pi}{6}(t-3)\right)$ m, with $t$ in hours. At what time $t\gt 0$ is the level first at its maximum?`,
     [t`$t=6$`, t`$t=3$`, t`$t=9$`, t`$t=12$`], 0,
     t`Maximum when $\tfrac{\pi}{6}(t-3)=\tfrac{\pi}{2}$, i.e. $t-3=3$, so $t=6$. ($t=3$ is the upward pass through equilibrium.)`,
     { vals: [6, 3, 9, 12], check: () => 3 + 3 });
