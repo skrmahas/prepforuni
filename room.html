@@ -37,8 +37,8 @@ html{-webkit-text-size-adjust:100%} body{margin:0} img{max-width:100%} [hidden]{
 html, body { height: 100%; background: var(--void); color: #e8e2d0; overflow: hidden; }
 body { font: 14px/1.4 var(--font-ui); }
 #stage { position: fixed; inset: 0; }
-#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-#css3d { position: absolute; inset: 0; pointer-events: none; }
+#gl { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+#css3d { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 #css3d * { pointer-events: none; }
 #board2d { position: fixed; left: 0; top: 0; z-index: 2; transform-origin: 0 0; }
 #board2d[hidden] { display: none; }
@@ -331,7 +331,7 @@ var mjReady = false;
 "use strict";
 /* ================= Renderer ================= */
 const stage = document.getElementById("stage");
-const renderer = new THREE.WebGLRenderer({ antialias: false });
+const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
 renderer.setPixelRatio(1);
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.shadowMap.enabled = true;
@@ -446,17 +446,22 @@ T.books = canvasTex(64, 32, (x, w, h, r) => {
   let bx = 0; while (bx < w) { const bw = 3 + (r() * 4 | 0), c = pal[r() * pal.length | 0], top = r() * 6 | 0; x.fillStyle = c; x.fillRect(bx, top, bw, h - top); x.fillStyle = "rgba(255,255,255,.25)"; x.fillRect(bx, top + 4, bw, 1); x.fillRect(bx, h - 6, bw, 1); x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(bx + bw - 1, top, 1, h - top); bx += bw; }
   grain(x, w, h, r, 10);
 }, 53);
-T.poster = canvasTex(64, 96, (x, w, h, r) => {
+function drawPoster(x, w, h, r, withPlane) {
   x.fillStyle = "#1c2a45"; x.fillRect(0, 0, w, h);
   x.fillStyle = "#f2b33d"; x.beginPath(); x.arc(46, 22, 9, 0, 7); x.fill();
-  x.fillStyle = "#e9eef2";
-  x.fillRect(29, 26, 6, 46);                                         // fuselage
-  x.beginPath(); x.moveTo(32, 20); x.lineTo(35, 27); x.lineTo(29, 27); x.fill(); // nose
-  x.beginPath(); x.moveTo(8, 50); x.lineTo(56, 50); x.lineTo(35, 40); x.lineTo(29, 40); x.closePath(); x.fill(); // wing
-  x.beginPath(); x.moveTo(20, 74); x.lineTo(44, 74); x.lineTo(35, 68); x.lineTo(29, 68); x.closePath(); x.fill(); // tailplane
-  x.font = "bold 13px monospace"; x.textAlign = "center"; x.fillText("FLY", 32, 90);
+  const shape = () => {
+    x.beginPath(); x.rect(29, 26, 6, 46);                                                     // fuselage
+    x.moveTo(32, 20); x.lineTo(35, 27); x.lineTo(29, 27); x.closePath();                       // nose
+    x.moveTo(8, 50); x.lineTo(56, 50); x.lineTo(35, 40); x.lineTo(29, 40); x.closePath();      // wing
+    x.moveTo(20, 74); x.lineTo(44, 74); x.lineTo(35, 68); x.lineTo(29, 68); x.closePath();     // tailplane
+  };
+  if (withPlane) { x.fillStyle = "#e9eef2"; shape(); x.fill(); }
+  else { x.strokeStyle = "rgba(233,238,242,.55)"; x.lineWidth = 1; x.setLineDash([2, 2]); shape(); x.stroke(); x.setLineDash([]); } // where the plane was
+  x.fillStyle = "#e9eef2"; x.font = "bold 13px monospace"; x.textAlign = "center"; x.fillText("FLY", 32, 90);
   grain(x, w, h, r, 10);
-}, 59, false);
+}
+T.poster = canvasTex(64, 96, (x, w, h, r) => drawPoster(x, w, h, r, true), 59, false);
+T.posterEmpty = canvasTex(64, 96, (x, w, h, r) => drawPoster(x, w, h, r, false), 59, false);
 T.screen = canvasTex(64, 40, (x, w, h, r) => {
   x.fillStyle = "#0e1c33"; x.fillRect(0, 0, w, h);
   for (let y = 4; y < h - 2; y += 4) { x.fillStyle = r() > 0.3 ? "#5fd38a" : "#7fb0ff"; x.fillRect(4, y, 6 + (r() * 46 | 0), 2); }
@@ -565,7 +570,12 @@ box(1.26, 0.02, 0.36, M.metal, 0, RH - 0.02, 0, { cast: false });
 
 /* --- study wall: whiteboard above the desk --- */
 const BOARD = { w: 2.1, h: 1.2, x: 0.45, y: 1.68, z: Z0 + 0.035 };
-plane(BOARD.w, BOARD.h, M.white, BOARD.x, BOARD.y, BOARD.z - 0.003);
+// The whiteboard's content is DOM (CSS3D) rendered *behind* the WebGL canvas. This plane punches a
+// transparent hole in the canvas exactly over the board, so the board shows through while anything in
+// front of it (a paper plane, the player's shadow) still draws on top with correct depth.
+const BOARD_HOLE = new THREE.MeshBasicMaterial({ color: 0x000000, blending: THREE.NoBlending });
+BOARD_HOLE.opacity = 0;
+plane(BOARD.w, BOARD.h, BOARD_HOLE, BOARD.x, BOARD.y, BOARD.z);
 box(BOARD.w + 0.08, 0.04, 0.05, M.metal, BOARD.x, BOARD.y + BOARD.h / 2, Z0 + 0.025);
 box(BOARD.w + 0.08, 0.04, 0.05, M.metal, BOARD.x, BOARD.y - BOARD.h / 2 - 0.04, Z0 + 0.025);
 box(0.04, BOARD.h, 0.05, M.metal, BOARD.x - BOARD.w / 2 - 0.02, BOARD.y - BOARD.h / 2, Z0 + 0.025);
@@ -633,7 +643,7 @@ box(0.6, 0.12, 0.34, M.fabric, BED.x, 0.55, BED.z0 + 0.25);
 const bedHit = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.5, bl), new THREE.MeshBasicMaterial({ visible: false }));
 bedHit.position.set(BED.x, 0.4, bz); scene.add(bedHit); clickable(bedHit, "bed", "Bed: take a break");
 // poster above the bed, mini fridge north of the bed
-plane(0.55, 0.82, M.poster, X0 + 0.012, 1.55, 1.35, 0, Math.PI / 2);
+clickable(plane(0.55, 0.82, M.poster, X0 + 0.012, 1.55, 1.35, 0, Math.PI / 2), "poster", "Poster: FLY");
 box(0.5, 0.82, 0.5, M.fridge, X0 + 0.3, 0, -0.2);
 box(0.02, 0.25, 0.03, M.dark, X0 + 0.56, 0.45, -0.38);
 box(0.44, 0.26, 0.34, M.dark, X0 + 0.3, 0.82, -0.22);
@@ -1072,6 +1082,80 @@ function rollBomb(now) {
   if (!bomb && Math.random() < 1 / 10000) plantBomb();
 }
 
+/* ================= Paper plane: the poster's plane folds into 3D and tours the room ================= */
+const POSTER = V3c(X0 + 0.06, 1.56, 1.35);
+function V3c(x, y, z) { return new THREE.Vector3(x, y, z); }
+const paperGeo = (() => {
+  // A classic dart, nose toward +z, sized like the plane printed on the poster (0.46 m long, 0.41 m span).
+  const N = [0, 0, 0.23], S = [0, 0, -0.23], L = [-0.205, 0.035, -0.23], R = [0.205, 0.035, -0.23], K = [0, -0.065, -0.21];
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute([...N, ...S, ...L, ...N, ...R, ...S, ...N, ...K, ...S], 3));
+  g.computeVertexNormals();
+  return g;
+})();
+const paperMat = new THREE.MeshLambertMaterial({ color: 0xf3f0e6, side: THREE.DoubleSide, flatShading: true });
+// Flat against the poster: nose up (+y), wings along the wall (z), top of the wings facing into the room (+x).
+const PAPER_FLAT = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(V3c(0, 0, 1), V3c(1, 0, 0), V3c(0, 1, 0)));
+const paperPath = new THREE.CatmullRomCurve3([
+  V3c(-1.5, 1.65, 1.3), V3c(-0.9, 2.1, 0.3), V3c(-0.4, 1.4, -1.3), V3c(0.6, 2.2, -1.9), V3c(1.3, 2.05, -0.9),
+  V3c(1.45, 1.8, 0.6), V3c(0.8, 1.6, 1.9), V3c(-0.3, 2.25, 1.95), V3c(-1.15, 1.9, 1.75)
+], true, "centripetal");
+const PAPER_SPEED = 2.3, PAPER_LOOPS = 2;
+let paper = null;
+function paperPoseOnPath(u) {
+  const p = paperPath.getPointAt(u), tan = paperPath.getTangentAt(u);
+  const ahead = paperPath.getTangentAt((u + 0.015) % 1);
+  const turn = tan.x * ahead.z - tan.z * ahead.x;              // signed horizontal turn rate
+  return { p, tan, turn };
+}
+function quatLookingAlong(pos, dir, roll) {
+  const o = new THREE.Object3D(); o.position.copy(pos); o.lookAt(pos.clone().add(dir)); o.rotateZ(roll); return o.quaternion.clone();
+}
+function launchPaper() {
+  const mesh = new THREE.Mesh(paperGeo, paperMat); mesh.castShadow = true;
+  const folds = new THREE.LineSegments(new THREE.EdgesGeometry(paperGeo, 1), new THREE.LineBasicMaterial({ color: 0xa9a496 }));
+  mesh.add(folds);
+  mesh.position.copy(POSTER); mesh.quaternion.copy(PAPER_FLAT); scene.add(mesh);
+  M.poster.map = T.posterEmpty; M.poster.needsUpdate = true;
+  paper = { mesh, phase: "peel", t0: performance.now(), dist: 0, roll: 0 };
+  tone(420, 0, 0.5, "triangle", 0.03, 1300);
+  chat("You", "Cleared for takeoff.");
+}
+function updatePaper(now, dt) {
+  if (!paper) return;
+  const m = paper.mesh, t = (now - paper.t0) / 1000;
+  if (paper.phase === "peel") {
+    // Peels off the poster, swings out into the room and joins the flight path.
+    const k = Math.min(1, t / 1.0), e = ease(k), start = paperPoseOnPath(0);
+    const mid = POSTER.clone().add(V3c(0.4, 0.12, 0));
+    m.position.copy(bez(POSTER, mid, start.p, e));
+    m.quaternion.copy(PAPER_FLAT).slerp(quatLookingAlong(start.p, start.tan, 0), e);
+    m.scale.setScalar(1 + 0.05 * Math.sin(k * Math.PI));
+    if (k >= 1) { paper.phase = "fly"; paper.dist = 0; }
+  } else if (paper.phase === "fly") {
+    paper.dist += PAPER_SPEED * dt;
+    const loops = paper.dist / paperPath.getLength(), u = loops % 1;
+    const { p, tan, turn } = paperPoseOnPath(u);
+    paper.roll += (Math.max(-0.75, Math.min(0.75, -turn * 9)) - paper.roll) * (1 - Math.exp(-dt * 5));
+    p.y += Math.sin(now / 260) * 0.03;                                   // paper bob
+    m.position.copy(p);
+    m.quaternion.copy(quatLookingAlong(p, tan, paper.roll));
+    m.rotateX(Math.sin(now / 140) * 0.05);                              // flutter
+    if (loops >= PAPER_LOOPS) { paper.phase = "land"; paper.t0 = now; paper.from = { p: m.position.clone(), q: m.quaternion.clone() }; }
+  } else if (paper.phase === "land") {
+    // Glides back in and settles flat onto the poster.
+    const k = Math.min(1, t / 1.4), e = 1 - Math.pow(1 - k, 3);
+    const mid = POSTER.clone().add(V3c(0.5, 0.05, 0.1));
+    m.position.copy(bez(paper.from.p, mid, POSTER, e));
+    m.quaternion.copy(paper.from.q).slerp(PAPER_FLAT, ease(k));
+    if (k >= 1) {
+      scene.remove(m); M.poster.map = T.poster; M.poster.needsUpdate = true; paper = null;
+      tone(300, 0, 0.12, "triangle", 0.03, 180);
+      chat("Roommate", "Smooth landing. Now back to the whiteboard.");
+    }
+  }
+}
+
 /* ================= Whiteboard DOM in 3D ================= */
 const PX = 1050, PY = 600, SCALE = BOARD.w / PX;
 // Two copies of the board: one placed in 3D (display only, seen while moving and from the room), and a flat
@@ -1311,6 +1395,7 @@ function interact(a) {
   else if (a === "clock") openPomo();
   else if (a === "laptop") location.href = "index.html";
   else if (a === "calendar") chat("Calendar", daysLeft() + " days until the selection exam on 11 March 2027.");
+  else if (a === "poster") { if (!paper) launchPaper(); else chat("You", "It's still out there somewhere. Look up."); }
   else if (a === "door") chat("Roommate", "The exam's in " + daysLeft() + " days. The door can wait.");
 }
 
@@ -1748,7 +1833,7 @@ function frame(now) {
   const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
   movePlayer(dt);
   animateChair(now);
-  rollBomb(now); updateBomb(now, dt);
+  rollBomb(now); updateBomb(now, dt); updatePaper(now, dt);
   updateCamera(now);
   if (now - lastClock > 20000) { drawClock(); lastClock = now; }
   tickTimer();
