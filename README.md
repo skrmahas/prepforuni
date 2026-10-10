@@ -11,13 +11,19 @@
 - **Stats:** accuracy and average time per topic, a 14-day review forecast, and your weakest syllabus items.
 - **Storage:** progress is saved in your browser (`localStorage`). Use Settings → Export/Import to back it up or move it to another device.
 
-It is a static site with no build step and no dependencies to install. MathJax and Google Fonts load from CDNs.
+### 3D dorm (`room.html`, beta)
+
+A low-poly dorm room in the style of late-90s shooters: chunky geometry, crunchy 64-pixel textures drawn in code, hard-edged lighting and an amber HUD. The whiteboard runs the same study session as the 2D app. Click the board to walk up to it, answer with A–D, rate with 1–4, and press Esc to step back. The calendar shows the days left until the exam. The laptop opens the 2D app. Progress is shared with the 2D app, because both use `core.js` and the same browser storage. **Retro pixels** switches between the low-resolution look and full resolution.
+
+It is a static site with no build step and no dependencies to install. MathJax, Three.js and Google Fonts load from CDNs.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `index.html` | The app (UI, scheduler, storage) |
+| `index.html` | The 2D app (decks, study, exam simulation, stats, settings) |
+| `room.html` | The 3D dorm room (Three.js r128 from a CDN) |
+| `core.js` | Shared logic: progress storage, scheduler, study queues |
 | `problems-math.js`, `problems-math-2.js` | Maths problem banks (topics M1–M7) |
 | `problems-physics.js`, `problems-physics-2.js` | Physics problem banks (topics P1–P5) |
 | `tools/validate.mjs` | Checks the bank: schema, syllabus coverage, and recomputes numeric answers |
