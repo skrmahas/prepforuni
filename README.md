@@ -27,7 +27,8 @@ At the whiteboard, answer with A–D, rate with 1–4, and press Esc to step bac
 - **The door: defend site A.** Once today's due reviews and new cards are finished, the door unlocks for one round a day. You step out into the courtyard as a lone CT with kevlar, an M4, a USP and a knife. Four T bots come out of two doorways; one carries the bomb.
   - **Win:** kill them all before they plant, let the 1:45 timer run out, or hold E on a planted bomb for 5 s to defuse it.
   - **Lose:** you die, or the bomb goes off.
-  - **Controls:** WASD to move, mouse to aim, left click to fire or slash, right click to stab, 1/2/3, Q or the mouse wheel to switch weapons, R to reload.
+  - **Controls:** WASD to move, mouse to aim, left click (or hold F) to fire or slash, right click to stab, 1/2/3, Q or the mouse wheel to switch weapons, R to reload.
+  - **Knife:** a slash does 40 (25 for quick follow-ups), a stab does 65, and from behind a slash does 90 and a stab 180.
   - **HUD:** health, armor and ammo, a radar, and a kill feed with headshots. A summary of kills, headshots and accuracy follows the round.
   - **Testing:** `room.html#round` unlocks the door straight away.
 - **Sound:** short synth sounds for the alarm, the rage-quit and nightmares. Toggle them with **Sound** in the top bar. The laptop opens the 2D app. Progress is shared with the 2D app, because both use `core.js` and the same browser storage. **Retro pixels** switches between the low-resolution look and full resolution.

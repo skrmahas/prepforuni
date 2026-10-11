@@ -1875,7 +1875,7 @@ addEventListener("keydown", e => {
   } else if (/^[1-4]$/.test(K)) { e.preventDefault(); rate(+K); }
   else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rate(cur.def || 3); }
 });
-addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
+addEventListener("keyup", e => { keys.delete(e.key.toLowerCase()); const c = typeof CODE_KEYS !== "undefined" && CODE_KEYS[e.code]; if (c) keys.delete(c); });
 addEventListener("blur", () => keys.clear());
 
 /* ================= Playable round: defend bombsite A =================
@@ -1955,6 +1955,16 @@ function fpsCamera(now) {
   cam.pos.copy(pos); cam.look.copy(pos.clone().add(dirFrom(player.yaw, player.pitch * (1 - k) - 0.15 * k)));
   return 1.1 * k;
 }
+// A move is allowed if no wall/crate is in the way and the ground there is at most a small step higher
+// (the ramp is continuous; the 1 m site platform and the ramp's sides are not). Mid-air you can only
+// move over ground that is below your feet, so jumping can't put you inside the platform.
+function canStep(nx, nz) {
+  if (blockedMap(nx, nz, ME.fy)) return false;
+  let g = groundAt(nx, nz);                      // highest ground under the player's body, not just its centre
+  for (const [ox, oz] of [[PR, 0], [-PR, 0], [0, PR], [0, -PR]]) g = Math.max(g, groundAt(nx + ox, nz + oz));
+  const airborne = ME.vy !== 0 || ME.fy > groundAt(ME.x, ME.z) + 0.02;
+  return airborne ? g <= ME.fy + 0.02 : g - ME.fy <= 0.45;
+}
 function moveFps(dt) {
   if (!ME.alive || !round || round.phase === "freeze" || menuOpen()) { ME.moving = 0; return; }
   let f = 0, r = 0;
@@ -1968,8 +1978,8 @@ function moveFps(dt) {
     f /= len; r /= len;
     const sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
     const dx = (-sy * f + cy * r) * speed * dt, dz = (-cy * f - sy * r) * speed * dt;
-    if (!blockedMap(ME.x + dx, ME.z, ME.fy)) ME.x += dx;
-    if (!blockedMap(ME.x, ME.z + dz, ME.fy)) ME.z += dz;
+    if (canStep(ME.x + dx, ME.z)) ME.x += dx;
+    if (canStep(ME.x, ME.z + dz)) ME.z += dz;
   }
   const g = groundAt(ME.x, ME.z);
   if (keys.has(" ") && ME.vy === 0 && ME.fy <= g + 0.01) ME.vy = 3.3;
@@ -2216,17 +2226,38 @@ function shootGun(now) {
   VM.kick = 1;
   (ME.wpn === "m4" ? sfxGun.m4 : sfxGun.usp)();
 }
+function knifeHit(range) {
+  // Sweep a small fan of rays so a slash that is roughly on target connects, like the game's melee hull.
+  const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+  const right = new THREE.Vector3().crossVectors(dir, V3(0, 1, 0)).normalize(), up = new THREE.Vector3().crossVectors(right, dir).normalize();
+  let wall = null;
+  for (const [ox, oy] of [[0, 0], [-0.12, 0], [0.12, 0], [0, -0.12], [0, 0.1], [-0.22, -0.05], [0.22, -0.05]]) {
+    const d = dir.clone().addScaledVector(right, ox).addScaledVector(up, oy).normalize();
+    shotRay.set(camera.position, d); shotRay.far = range;
+    const h = shotRay.intersectObjects(mapHitMeshes.concat(aliveBots()), true).find(x => !x.object.userData.noHit);
+    if (!h) continue;
+    const t = botOf(h.object);
+    if (t) return { t, h };
+    wall = wall || h;
+  }
+  return wall ? { h: wall } : null;
+}
 function knifeAttack(now, kind) {
-  ME.nextFire = now + (kind === "stab" ? 1000 : 400); VM.slash = now; VM.slashKind = kind;
+  const followUp = kind === "slash" && now - (ME.lastSlash || 0) < 900;
+  ME.nextFire = now + (kind === "stab" ? 1000 : followUp ? 400 : 500); VM.slash = now; VM.slashKind = kind;
+  if (kind === "slash") ME.lastSlash = now;
   (kind === "stab" ? sfxGun.stab : sfxGun.slash)();
   setTimeout(() => {
     if (!round || !ME.alive) return;
-    const h = castShot(0.02, 1.8);
-    if (!h) return;
-    const t = botOf(h.object);
-    if (t) { const zone = h.object.userData.zone || "body"; hurtBot(t, zone, kind === "stab" ? (zone === "head" ? 100 : 70) : (zone === "head" ? 60 : 40), "Knife", h.point); }
-    else sfxGun.clank();
-  }, kind === "stab" ? 220 : 120);
+    const r = knifeHit(2.2);
+    if (!r) return;
+    if (!r.t) { sfxGun.clank(); return; }
+    const t = r.t, b = t.userData.bot;
+    const facing = V3(Math.sin(t.userData.yaw), 0, Math.cos(t.userData.yaw)), toMe = V3(ME.x - t.position.x, 0, ME.z - t.position.z).normalize();
+    const back = facing.dot(toMe) < -0.3;   // attacker is behind the bot
+    const dmg = kind === "stab" ? (back ? 180 : 65) : back ? 90 : followUp ? 25 : 40;
+    hurtBot(t, r.h.object.userData.zone || "body", dmg, back ? "Knife (back)" : "Knife", r.h.point);
+  }, kind === "stab" ? 200 : 110);
 }
 function updatePlayerFire(now, dt) {
   finishReload(now);
@@ -2300,18 +2331,19 @@ function reassignCarrier() {
   chat("Radio", b.name + " picked up the bomb.");
 }
 function botShoot(t, b, eye, pe, dist, now) {
-  if (b.burst <= 0) b.burst = 2 + Math.floor(Math.random() * 3);
-  b.burst--; b.nextShot = now + (b.burst > 0 ? 120 : 650 + Math.random() * 700);
+  if (b.burst <= 0) b.burst = 2 + Math.floor(Math.random() * 4);
+  b.burst--; b.nextShot = now + (b.burst > 0 ? 115 : 480 + Math.random() * 520);
   t.updateMatrixWorld(true);
   const muzzle = t.userData.rifle.localToWorld(V3(0, 0.02, 0.64));
-  let p = Math.max(0.07, Math.min(0.3, 0.38 - dist * 0.016));
+  let p = Math.max(0.09, Math.min(0.36, 0.46 - dist * 0.016));
   if (ME.moving > 2) p *= 0.65;
   if (now - b.reactAt < 400) p *= 0.5;
   if (b.moveShot) p *= 0.5;
+  if (b.strafeDir) p *= 0.85;
   let end;
   if (Math.random() < p) {
     end = pe.clone().add(V3((Math.random() - 0.5) * 0.3, -0.3 - Math.random() * 0.5, (Math.random() - 0.5) * 0.3));
-    damagePlayer(Math.random() < 0.04 ? 40 : 9 + Math.random() * 5, b.name, "AK");
+    damagePlayer(Math.random() < 0.05 ? 45 : 10 + Math.random() * 5, b.name, "AK");
   } else {
     end = pe.clone().add(V3((Math.random() - 0.5) * 2.4, (Math.random() - 0.4) * 1.6, (Math.random() - 0.5) * 2.4));
     const dir = end.clone().sub(muzzle).normalize(); shotRay.set(muzzle, dir); shotRay.far = 80;
@@ -2345,14 +2377,22 @@ function updateBots(now, dt) {
       const clear = dist < 45 && lineClear(eye, pe);
       b.sees = clear && (ang < 1.25 || dist < 7 || heard || now - b.alerted < 3000);
       if (clear) b.seenByMe = now; // also used by the radar
-      if (b.sees) { if (!b.engaged) { b.engaged = true; b.reactAt = now + 600 + Math.random() * 500; } b.lastSeen = now; }
+      if (b.sees) { if (!b.engaged) { b.engaged = true; b.reactAt = now + 450 + Math.random() * 400; } b.lastSeen = now; }
     }
     if (b.engaged && now - b.lastSeen > 1800) b.engaged = false;
     if (b.state === "plant") { poseT(t, "plant", dt); if (now - b.plantStart > 3200) plantDone(t, now); continue; }
     const pushing = b.carrier && !round.planted;   // the bomb carrier keeps going for the site
     if (b.engaged && !t.userData.air && !pushing) {
       t.userData.targetYaw = Math.atan2(pe.x - t.position.x, pe.z - t.position.z);
-      poseT(t, "aim", dt);
+      // Strafe side to side while fighting, staying on the same level and out of walls.
+      if (!b.strafeUntil || now > b.strafeUntil) { b.strafeDir = Math.random() < 0.5 ? -1 : 1; b.strafeUntil = now + 400 + Math.random() * 700; if (Math.random() < 0.25) b.strafeDir = 0; }
+      if (b.strafeDir) {
+        const yaw = t.userData.yaw, sx = Math.cos(yaw) * b.strafeDir * 1.7 * dt, sz = -Math.sin(yaw) * b.strafeDir * 1.7 * dt;
+        const nx = t.position.x + sx, nz = t.position.z + sz, here = groundAt(t.position.x, t.position.z);
+        if (groundAt(nx, nz) === here && !blockedMap(nx, nz, t.position.y)) { t.position.x = nx; t.position.z = nz; t.userData.phase += dt * 8; }
+        else b.strafeDir = -b.strafeDir;
+      }
+      poseT(t, b.strafeDir ? "run" : "aim", dt);
       if (b.sees && now >= b.reactAt && now >= b.nextShot) botShoot(t, b, eye, pe, dist, now);
       continue;
     }
@@ -2528,7 +2568,10 @@ canvas.addEventListener("mousedown", ev => {
 addEventListener("mouseup", ev => { keys.delete(ev.button === 2 ? "mouse2" : "mouse1"); });
 canvas.addEventListener("contextmenu", ev => { if (mode === "fps") ev.preventDefault(); });
 canvas.addEventListener("wheel", ev => { if (mode === "fps" && ME.alive) { cycleWeapon(ev.deltaY > 0 ? 1 : -1); ev.preventDefault(); } }, { passive: false });
+const CODE_KEYS = { KeyW: "w", KeyA: "a", KeyS: "s", KeyD: "d", Space: " ", ShiftLeft: "shift", ShiftRight: "shift", KeyE: "e", KeyF: "mouse1", KeyR: "r", KeyQ: "q", Digit1: "1", Digit2: "2", Digit3: "3" };
 function fpsKey(e, k) {
+  k = CODE_KEYS[e.code] || k;
+  if (k === "mouse1") { keys.add(k); e.preventDefault(); return; }
   if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", " ", "shift", "e"].includes(k)) { keys.add(k); e.preventDefault(); }
   else if (k === "1") switchWeapon("m4"); else if (k === "2") switchWeapon("usp"); else if (k === "3") switchWeapon("knife");
   else if (k === "q") switchWeapon(ME.last);
