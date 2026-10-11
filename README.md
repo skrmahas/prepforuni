@@ -24,6 +24,12 @@ At the whiteboard, answer with A–D, rate with 1–4, and press Esc to step bac
 - **Rage-quit:** when the Pomodoro runs out, the whiteboard boils red, your head shakes while you shout, you dive across the room onto the bed, and you're knocked out cold (stars, ringing ears, eyelids closing) into the break.
 - **The poster:** use it and the plane on it folds into a 3D paper dart, peels off the poster, loops around the room twice (banking into turns, casting a shadow), then glides back and settles onto the poster again.
 - **The window:** it looks down from the second floor onto a sandy desert courtyard with bomb site A: sandstone walls with arched windows, a raised paved site with olive crates, a cobbled ramp, and mountains behind. Every second there's a 1-in-10,000 chance that two T's run out, plant a bomb on the site, and leave. 40 seconds of faster and faster beeping later, it explodes. Add `#bomb` to the URL (`room.html#bomb`) to trigger it straight away.
+- **The door: defend site A.** Once today's due reviews and new cards are finished, the door unlocks for one round a day. You step out into the courtyard as a lone CT with kevlar, an M4, a USP and a knife. Four T bots come out of two doorways; one carries the bomb.
+  - **Win:** kill them all before they plant, let the 1:45 timer run out, or hold E on a planted bomb for 5 s to defuse it.
+  - **Lose:** you die, or the bomb goes off.
+  - **Controls:** WASD to move, mouse to aim, left click to fire or slash, right click to stab, 1/2/3, Q or the mouse wheel to switch weapons, R to reload.
+  - **HUD:** health, armor and ammo, a radar, and a kill feed with headshots. A summary of kills, headshots and accuracy follows the round.
+  - **Testing:** `room.html#round` unlocks the door straight away.
 - **Sound:** short synth sounds for the alarm, the rage-quit and nightmares. Toggle them with **Sound** in the top bar. The laptop opens the 2D app. Progress is shared with the 2D app, because both use `core.js` and the same browser storage. **Retro pixels** switches between the low-resolution look and full resolution.
 
 It is a static site with no build step and no dependencies to install. MathJax, Three.js and Google Fonts load from CDNs.
