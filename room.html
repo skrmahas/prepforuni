@@ -1995,7 +1995,7 @@ addEventListener("keydown", e => {
   if (e.key === "Escape") { if (!$("m-round").hidden) exitMap(); else if (menuOpen()) dismissMenus(); else if (mode === "board") leaveBoard(); return; }
   if (menuOpen()) {
     if (e.key === "Enter" && e.target.tagName !== "BUTTON" && $("m-buy").hidden) { e.preventDefault(); if (!$("m-round").hidden) exitMap(); else if (!$("m-break").hidden) breakOk(); else savePomo(); return; }
-    if (!$("m-buy").hidden) { const c = CODE_KEYS[e.code] || k; if (/^[0-9]$/.test(c) || /^Digit[0-9]$/.test(e.code)) { e.preventDefault(); buyKey(+e.code.slice(-1)); } else if (c === "b") { e.preventDefault(); dismissMenus(); } return; }
+    if (!$("m-buy").hidden) { const c = CODE_KEYS[e.code] || k; if (/^[0-9]$/.test(c) || /^Digit[0-9]$/.test(e.code)) { e.preventDefault(); buyKey(+e.code.slice(-1)); } else if (c === "b") { e.preventDefault(); dismissMenus(); } else if (e.key === "Enter" && round && round.phase === "freeze") { e.preventDefault(); round.goNow = true; } return; }
     if ($("m-break").hidden === false && /^[0-5]$/.test(k) && e.target.tagName !== "INPUT") {
       e.preventDefault();
       if (k === "0") dismissMenus(); else startSleep([5, 10, 15, 20, 30][+k - 1], "break");
@@ -2926,7 +2926,7 @@ const SHOP = [
 ];
 const NADE_MAX = { he: 1, flash: 2, smoke: 1 };
 let buyCat = -1;
-function canBuyNow() { return round && round.phase !== "over" && ME.alive && performance.now() - round.t0 < round.buyFor && Math.hypot(ME.x - round.spawn[0], ME.z - round.spawn[1]) < 7; }
+function canBuyNow() { return round && round.phase !== "over" && ME.alive && (round.phase === "freeze" || performance.now() - round.liveAt < round.buyFor) && Math.hypot(ME.x - round.spawn[0], ME.z - round.spawn[1]) < 7; }
 function itemState(it) {
   if (["usp", "deagle"].includes(it.id) && ME.inv.pistol === it.id) return "owned";
   if (["mp5", "m4", "awp"].includes(it.id) && ME.inv.primary === it.id) return "owned";
@@ -2992,11 +2992,11 @@ function enterMap() {
     setZoom(0);
     player.yaw = Math.atan2(-(15 - ME.x), -(0 - ME.z)); player.pitch = 0;
     round = { phase: "freeze", t0: performance.now(), liveAt: 0, bots: [], spawned: 0, planted: 0, c4: null, nextBeep: 0, result: "", reason: "", endAt: 0, cleared: false,
-      scenario, layout, mood, spawn, buyFor: 28000, bombTime: scenario === "retake" ? 55 : 40, roundTime: 105000, lastKnown: null, plan: buildPlan(scenario) };
+      scenario, layout, mood, spawn, buyFor: 15000, freezeFor: 10000, goNow: false, bombTime: scenario === "retake" ? 55 : 40, roundTime: 105000, lastKnown: null, plan: buildPlan(scenario) };
     mode = "fps"; setModeClass();
-    centerMsg(SCEN[scenario].title, 3000);
     chat("Radio", `${SCEN[scenario].desc} ${LAYOUTS[layout]}, ${MOODS[mood].toLowerCase()}.`);
-    chat("Radio", `Press B to buy: $${money}${roundTest ? " (test round)" : ` from today's ${correctToday()} correct answers`}. 1-4 weapons, R reload, Ctrl crouch, right click to scope or stab.`);
+    centerMsg(`${SCEN[scenario].title}: buy time, the round starts in 10 s`, 4000);
+    chat("Radio", `Freeze time: nobody shoots for 10 s (Enter starts it now). Press B to buy: $${money}${roundTest ? " (test round)" : ` from today's ${correctToday()} correct answers`}. 1-4 weapons, R reload, Ctrl crouch, right click to scope or stab.`);
     sfxGun.draw();
   });
 }
@@ -3028,7 +3028,10 @@ function buildPlan(scenario) {
 function updateRound(now, dt) {
   if (!round) return;
   updateFxList(now);
-  if (round.phase === "freeze" && now - round.t0 > 3000) {
+  // Freeze time: nobody moves or shoots, so you can buy in peace. It ends after 10 s, or when you press Enter,
+  // but waits (up to 40 s) while the buy menu is still open.
+  if (round.phase === "freeze" && (round.goNow || (now - round.t0 > round.freezeFor && ($("m-buy").hidden || now - round.t0 > 40000)))) {
+    if (!$("m-buy").hidden) dismissMenus();
     round.phase = "live"; round.liveAt = now; sfxGun.start(); chat("Radio", "Go go go!");
     if (round.scenario === "retake") plantBombAt(now);
   }
@@ -3111,7 +3114,7 @@ let hudShown = "";
 function updateFpsHud(now) {
   const a = ME.ammo[ME.wpn], w = WPN[ME.wpn];
   let time;
-  if (round.phase === "freeze") time = round.scenario === "retake" ? "C4" : "1:45";
+  if (round.phase === "freeze") { const s = Math.max(0, Math.ceil((round.freezeFor - (now - round.t0)) / 1000)); time = "0:" + String(s).padStart(2, "0"); }
   else if (round.planted && round.c4) time = (Math.floor(now / 400) % 2 ? "C4" : "  ");
   else { const s = Math.max(0, Math.ceil((round.roundTime - (now - round.liveAt)) / 1000)); time = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
   const mag = w.melee ? "-" : w.grenade ? ME.inv.nades[ME.wpn] : a.mag, res = w.melee || w.grenade ? "-" : a.res;
@@ -3179,6 +3182,7 @@ function fpsKey(e, k) {
   else if (k === "q") switchWeapon(ME.last);
   else if (k === "r") reloadWeapon();
   else if (k === "b") { e.preventDefault(); openBuy(); }
+  else if (k === "enter" && round && round.phase === "freeze") { e.preventDefault(); round.goNow = true; }
 }
 function renderViewmodel() {
   if (mode !== "fps" || !ME.alive || ME.zoom) return;
