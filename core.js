@@ -21,13 +21,13 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 /* ---------- State ---------- */
 function todayKey(d = new Date()) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function startOfDay(ms = Date.now()) { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); }
-function fresh() { return { v: 1, updated: 0, cards: {}, day: { date: todayKey(), newDone: 0, reviewed: 0 }, settings: { newPerDay: 20, hideCalc: false }, history: {}, exams: [] }; }
+function fresh() { return { v: 1, updated: 0, cards: {}, day: { date: todayKey(), newDone: 0, reviewed: 0, correct: 0 }, settings: { newPerDay: 20, hideCalc: false }, history: {}, exams: [] }; }
 function sane(o) { return o && typeof o === "object" && o.v === 1 && o.cards && o.settings ? Object.assign(fresh(), o) : null; }
 const LS_KEY = "delft-ae-drill-v1";
 function readLocal() { try { return sane(JSON.parse(localStorage.getItem(LS_KEY))); } catch (e) { return null; } }
 function writeLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }
 let S = readLocal() || fresh();
-function rollDay() { if (S.day.date !== todayKey()) S.day = { date: todayKey(), newDone: 0, reviewed: 0 }; }
+function rollDay() { if (S.day.date !== todayKey()) S.day = { date: todayKey(), newDone: 0, reviewed: 0, correct: 0 }; }
 function cs(id) { return S.cards[id] || { s: "new" }; }
 
 /* Account sync through the db capability: one private document per viewer. */

@@ -24,14 +24,21 @@ At the whiteboard, answer with A–D, rate with 1–4, and press Esc to step bac
 - **Rage-quit:** when the Pomodoro runs out, the whiteboard boils red, your head shakes while you shout, you dive across the room onto the bed, and you're knocked out cold (stars, ringing ears, eyelids closing) into the break.
 - **The poster:** use it and the plane on it folds into a 3D paper dart, peels off the poster, loops around the room twice (banking into turns, casting a shadow), then glides back and settles onto the poster again.
 - **The window:** it looks down from the second floor onto a sandy desert courtyard with bomb site A: sandstone walls with arched windows, a raised paved site with olive crates, a cobbled ramp, and mountains behind. Every second there's a 1-in-10,000 chance that two T's run out, plant a bomb on the site, and leave. 40 seconds of faster and faster beeping later, it explodes. Add `#bomb` to the URL (`room.html#bomb`) to trigger it straight away.
-- **The door: defend site A.** Once today's due reviews and new cards are finished, the door unlocks for one round a day. You step out into the courtyard as a lone CT with kevlar, an M4, a USP and a knife. Four T bots come out of two doorways; one carries the bomb.
-  - **Win:** kill them all before they plant, let the 1:45 timer run out, or hold E on a planted bomb for 5 s to defuse it.
+- **The door: defend site A.** Once today's due reviews and new cards are finished, the door unlocks for one round a day. You step out into the courtyard as a lone CT with a USP and a knife, and buy the rest.
+  - **Buy menu (B):** open for the first 28 s near your spawn. You start with $800 plus $150 for every card you answered correctly today (up to $16,000). It sells a Desert Eagle, MP5, M4 and AWP (right click zooms the scope), kevlar and helmet, a defuse kit, and HE, flash and smoke grenades.
+  - **Grenades:** HE grenades do damage with falloff and are blocked by walls. Flashbangs white out your screen (less if you look away) and blind bots for a few seconds. Smoke blocks line of sight for 15 s. Grenades bounce off walls and the ground; left click throws, right click lobs.
+  - **Bots throw grenades too:** a flash as they come into the yard, an HE where they last saw you once you break line of sight, and a smoke to cover the planter.
+  - **A different round each day,** picked from the date:
+    - Scenarios: *Defend A* (four T's, one with the bomb), *Retake A* (the bomb is already planted, three guards, and you get a kit and $1000 extra), or *Eco rush* (five pistol T's rushing from both doors).
+    - Cover layouts: classic crates, a crate yard, or a sandbag line with a pillar.
+    - Weather: midday, dusk (orange sky and light), or a sandstorm that cuts visibility for you and the bots.
+  - **Win:** kill them all before they plant, let the 1:45 timer run out, or hold E on a planted bomb to defuse it (5 s with a kit, 10 s without).
   - **Lose:** you die, or the bomb goes off.
-  - **Controls:** WASD to move, mouse to aim, left click (or hold F) to fire or slash, right click to stab, 1/2/3, Q or the mouse wheel to switch weapons, R to reload, Space to jump, Ctrl or C to crouch.
+  - **Controls:** WASD to move, mouse to aim, left click (or hold F) to fire, slash or throw, right click to stab, lob or scope. Use 1 for primary, 2 for pistol, 3 for knife and 4 for grenades; Q or the mouse wheel also switches. R reloads, Space jumps, Ctrl or C crouches, B buys.
   - **Movement:** a jump clears the 1 m site platform. Crouching mid-jump (crouch-jump) gets you onto the crates. Crouching slows you to a third of normal speed but halves your spread, cuts recoil, and makes you harder to hit. From the courtyard you can see into your dorm room through its window.
   - **Knife:** a slash does 40 (25 for quick follow-ups), a stab does 65, and from behind a slash does 90 and a stab 180.
-  - **HUD:** health, armor and ammo, a radar, and a kill feed with headshots. A summary of kills, headshots and accuracy follows the round.
-  - **Testing:** `room.html#round` unlocks the door straight away.
+  - **HUD:** health, armor, ammo, money, a radar, and a kill feed with headshots. A summary of kills, headshots and accuracy follows the round.
+  - **Testing:** `room.html#round` unlocks the door straight away, with $16,000 and a random layout and weather. `#round=defend`, `#round=retake` or `#round=eco` forces a scenario.
 - **Sound:** short synth sounds for the alarm, the rage-quit and nightmares. Toggle them with **Sound** in the top bar. The laptop opens the 2D app. Progress is shared with the 2D app, because both use `core.js` and the same browser storage. **Retro pixels** switches between the low-resolution look and full resolution.
 
 It is a static site with no build step and no dependencies to install. MathJax, Three.js and Google Fonts load from CDNs.
