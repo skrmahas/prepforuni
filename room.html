@@ -86,6 +86,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .b-decks { display: flex; flex-direction: column; gap: 12px; max-width: 640px; margin-top: 6px; }
 .b-decks .mk { justify-content: space-between; font-size: 27px; }
 .b-decks .mk small { font-size: 20px; color: #5a6275; }
+.b-focus { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 21px; color: #5a6275; }
+.b-focus button { background: none; border: 0; padding: 0 4px; font: inherit; color: inherit; cursor: pointer; }
+.b-focus button.on { color: var(--ink); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
 .b-hint { margin-top: auto; font-size: 19px; color: #6a7183; }
 .b-hint kbd { font-family: var(--font-marker); border: 1.5px solid currentColor; border-radius: 4px; padding: 0 5px; }
 .b-done { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
@@ -395,6 +398,10 @@ var mjReady = false;
 <script src="problems-physics.js" charset="utf-8"></script>
 <script src="problems-math-2.js" charset="utf-8"></script>
 <script src="problems-physics-2.js" charset="utf-8"></script>
+<script src="problems-math-3.js" charset="utf-8"></script>
+<script src="problems-gen-lib.js" charset="utf-8"></script>
+<script src="problems-math-gen.js" charset="utf-8"></script>
+<script src="problems-physics-gen.js" charset="utf-8"></script>
 <script src="core.js" charset="utf-8"></script>
 <script>
 "use strict";
@@ -1531,7 +1538,7 @@ function startSession(deck, cram) {
   advance(); renderBoard(); updateHUD();
 }
 function advance() {
-  const p = nextCard(session.deck, session.cur && session.cur.id, session.cram);
+  const p0 = nextCard(session.deck, session.cur && session.cur.id, session.cram), p = p0 && reroll(p0.id);
   session.cur = p ? { id: p.id, perm: shuffle(p.choices.map((_, i) => i)), start: performance.now(), picked: null, ms: 0 } : null;
 }
 function choiceBtns(p, perm, cur, small) {
@@ -1542,7 +1549,7 @@ function choiceBtns(p, perm, cur, small) {
   }).join("");
 }
 function boardHead(p) {
-  return `<div class="b-head"><span class="code">${p.topic}&middot;${p.sub}</span><span>${esc(TOPICS[p.topic])}</span><span class="sp"></span><span>${"&#9679;".repeat(p.difficulty)}${"&#9675;".repeat(3 - p.difficulty)}</span><span>modelled on ${esc(p.model)}</span><span>${p.calc ? "calculator" : "by hand"}</span></div>`;
+  return `<div class="b-head"><span class="code">${p.topic}&middot;${p.sub}</span><span>${esc(TOPICS[p.topic])}</span><span class="sp"></span><span>${"&#9679;".repeat(p.difficulty)}${"&#9675;".repeat(3 - p.difficulty)}</span>${p.generated ? "<span>fresh numbers</span>" : ""}<span>modelled on ${esc(p.model)}</span><span>${p.calc ? "calculator" : "by hand"}</span></div>`;
 }
 function renderBoard() {
   const days = Math.max(0, Math.ceil((EXAM_DATE - startOfDay()) / DAY));
@@ -1552,7 +1559,8 @@ function renderBoard() {
     html = `<div class="b-note">${days}<br><span style="font-size:18px">days to go!</span></div>
       <div class="b-title">Tonight's revision</div>
       <div style="font-size:22px;color:#5a6275">Pick a deck. Answer, read the solution, rate yourself.</div>
-      <div class="b-decks">${deckRow("all", "Everything")}${deckRow("math", "Maths")}${deckRow("physics", "Physics")}</div>
+      <div class="b-decks">${deckRow("all", "Today's focus: " + esc(focusName()))}${deckRow("math", "Maths")}${deckRow("physics", "Physics")}</div>
+      <div class="b-focus">Focus on:${[["all", "everything"], ["math", "maths"], ["physics", "physics"]].map(([k, l]) => `<button data-focus="${k}" class="${focusKind() === k ? "on" : ""}">${l}</button>`).join("")}${focusKind() === "custom" ? '<span>(custom topics, set in 2D mode)</span>' : ""}</div>
       <div class="b-hint">${mode === "board" ? "Keys: <kbd>A</kbd>&ndash;<kbd>D</kbd> to answer, <kbd>1</kbd>&ndash;<kbd>4</kbd> to rate, <kbd>Esc</kbd> to step back." : "Walk up and press E, or click the board."}</div>`;
   } else if (!session.cur) {
     html = `<div class="b-done"><div class="b-title">Board's clear!</div>
@@ -1560,7 +1568,7 @@ function renderBoard() {
       <button class="mk" data-cram="1"><span>Practise this deck anyway</span></button>
       <button class="mk" data-end="1"><span>Wipe the board (pick another deck)</span></button></div>`;
   } else {
-    const cur = session.cur, p = BY_ID.get(cur.id);
+    const cur = session.cur, p = prob(cur.id);
     if (cur.picked === null) {
       html = `${boardHead(p)}<div class="b-stem">${p.stem}</div>
         <div class="b-choices">${choiceBtns(p, cur.perm, cur)}</div>
@@ -1590,7 +1598,7 @@ function answer(ci) {
   const cur = session && session.cur;
   if (!cur || cur.picked !== null) return;
   cur.picked = ci; cur.ms = performance.now() - cur.start;
-  const p = BY_ID.get(cur.id), ok = ci === p.answer;
+  const p = prob(cur.id), ok = ci === p.answer;
   const c = Object.assign({}, cs(p.id));
   c.seen = (c.seen || 0) + 1; c.right = (c.right || 0) + (ok ? 1 : 0); c.tsum = (c.tsum || 0) + Math.min(cur.ms, 600000);
   S.cards[p.id] = c; rollDay(); if (ok) S.day.correct = (S.day.correct || 0) + 1;
@@ -1614,7 +1622,8 @@ function rate(r) {
 boardEl.addEventListener("click", ev => {
   const b = ev.target.closest("button"); if (!b) return;
   const d = b.dataset;
-  if (d.deck) startSession(d.deck);
+  if (d.focus) { setFocus(d.focus === "math" ? MATH_TOPICS : d.focus === "physics" ? PHYS_TOPICS : null); renderBoard(); updateHUD(); dailyAnnounced = false; }
+  else if (d.deck) startSession(d.deck);
   else if (d.choice !== undefined) answer(+d.choice);
   else if (d.rate) rate(+d.rate);
   else if (d.cram) { session.cram = true; advance(); renderBoard(); }
@@ -1897,7 +1906,7 @@ function rage() {
   const cur = session && session.cur;
   if (cur && cur.picked !== null) rate(cur.def || 3); // never lose an answered card
   pauseCard();
-  const p = session && session.cur && BY_ID.get(session.cur.id);
+  const p = session && session.cur && prob(session.cur.id);
   const lines = RAGE[p ? p.subject : "math"];
   R.line = lines[Math.floor(Math.random() * lines.length)];
   R.t0 = performance.now(); R.fired = new Set(); R.p0 = cam.pos.clone(); R.l0 = cam.look.clone();
@@ -2010,7 +2019,7 @@ addEventListener("keydown", e => {
     return;
   }
   if (mode !== "board" || !session || !session.cur) return;
-  const cur = session.cur, p = BY_ID.get(cur.id), K = e.key.toUpperCase();
+  const cur = session.cur, p = prob(cur.id), K = e.key.toUpperCase();
   if (cur.picked === null) {
     let i = "ABCDE".indexOf(K); if (i < 0 && /^[1-5]$/.test(K)) i = +K - 1;
     if (i >= 0 && i < p.choices.length) { e.preventDefault(); answer(cur.perm[i]); }

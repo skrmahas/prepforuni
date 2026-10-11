@@ -4,7 +4,9 @@
 
 ## What it does
 
-- **Problem bank:** 323 original multiple-choice problems (177 maths, 146 physics) covering every item of the official *Syllabus Selection Exam – Mathematics & Physics* (v2024).
+- **Problem bank:** 404 original multiple-choice cards (244 maths, 160 physics) covering every item of the official *Syllabus Selection Exam – Mathematics & Physics* (v2024).
+- **Generated cards:** 56 of those cards (42 maths, 14 physics) are templates that roll new numbers every time they come up, with distractors built from typical mistakes and a worked solution that uses the same numbers. A repeat is a fresh problem of the same type, so you can't just remember the answer. They're marked "new numbers each time".
+- **Focus:** on the Decks page (or on the dorm whiteboard), choose what *Today's focus* covers: everything, maths only, physics only, or hand-picked topics. The main session, the daily due/new counts and the dorm door follow the focus. Out-of-focus decks stay available, and their reviews wait until you switch back.
 - **Calibration:** problems are pitched at the level of TU Delft's Pre-University Calculus and Pre-University Physics MOOCs, Dutch VWO central exams (Wiskunde B, Natuurkunde), Cambridge ENGAA/ESAT, and (for the hardest mechanics items) the style of Krotov's *Aptitude Test Problems in Physics*. Each card names the source it is modelled on. No real exam questions are included.
 - **Study:** answer, then read a worked solution, then rate Again / Hard / Good / Easy. Scheduling is SM-2 with learning steps, and a timer shows the 90-second exam pace.
 - **Exam simulation:** 20 questions in 30 minutes, with a full review at the end. Missed cards go back into the review queue.
@@ -52,8 +54,10 @@ It is a static site with no build step and no dependencies to install. MathJax, 
 | `index.html` | The 2D app (decks, study, exam simulation, stats, settings) |
 | `room.html` | The 3D dorm room (Three.js r128 from a CDN) |
 | `core.js` | Shared logic: progress storage, scheduler, study queues |
-| `problems-math.js`, `problems-math-2.js` | Maths problem banks (topics M1–M7) |
+| `problems-math.js`, `problems-math-2.js`, `problems-math-3.js` | Maths problem banks (topics M1–M7) |
 | `problems-physics.js`, `problems-physics-2.js` | Physics problem banks (topics P1–P5) |
+| `problems-gen-lib.js` | Helpers for generated cards (formatting, choice building, numeric checks) |
+| `problems-math-gen.js`, `problems-physics-gen.js` | Generated card templates |
 | `tools/validate.mjs` | Checks the bank: schema, syllabus coverage, and recomputes numeric answers |
 
 ## Run locally
@@ -72,6 +76,8 @@ Each problem is one `q(...)` call: id (`<topic>-<syllabus item>-<nn>`), difficul
 node tools/validate.mjs .
 ```
 
-The validator checks every `problems-*.js` file in the folder. The app only loads the bank files that have a `<script>` tag in `index.html`, so add a tag for any new bank file.
+A generated card is registered with `g(id, subject, difficulty, model, calc, gen)` (see `problems-gen-lib.js`). `gen` returns the stem, choices and solution for one roll; the validator rolls each template 400 times and checks every roll.
+
+The validator checks every `problems-*.js` file in the folder. The app only loads the bank files that have a `<script>` tag in `index.html`, so add a tag for any new bank file (in `room.html` too).
 
 Not affiliated with TU Delft.

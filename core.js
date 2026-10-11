@@ -16,12 +16,17 @@ const EXAM_DATE = new Date(2027, 2, 11);
 const DAY = 864e5, MIN = 6e4, STEPS = [1, 10], TARGET = 90;
 const PROBLEMS = (window.PROBLEMS || []).slice();
 const BY_ID = new Map(PROBLEMS.map(p => [p.id, p]));
+/* Generated cards have gen(rnd) instead of a fixed stem: each time one comes up it is rolled with new numbers
+   (reroll), and prob(id) returns the instance currently on screen. Fixed cards come back unchanged. */
+const INST = new Map();
+function reroll(id) { const p = BY_ID.get(id); if (p && p.gen) INST.set(id, Object.assign({}, p, p.gen(Math.random))); return prob(id); }
+function prob(id) { const p = BY_ID.get(id); if (!p || !p.gen) return p; if (!INST.has(id)) reroll(id); return INST.get(id); }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 /* ---------- State ---------- */
 function todayKey(d = new Date()) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function startOfDay(ms = Date.now()) { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); }
-function fresh() { return { v: 1, updated: 0, cards: {}, day: { date: todayKey(), newDone: 0, reviewed: 0, correct: 0 }, settings: { newPerDay: 20, hideCalc: false }, history: {}, exams: [] }; }
+function fresh() { return { v: 1, updated: 0, cards: {}, day: { date: todayKey(), newDone: 0, reviewed: 0, correct: 0 }, settings: { newPerDay: 20, hideCalc: false, focus: null }, history: {}, exams: [] }; }
 function sane(o) { return o && typeof o === "object" && o.v === 1 && o.cards && o.settings ? Object.assign(fresh(), o) : null; }
 const LS_KEY = "delft-ae-drill-v1";
 function readLocal() { try { return sane(JSON.parse(localStorage.getItem(LS_KEY))); } catch (e) { return null; } }
@@ -101,9 +106,31 @@ function fmtIvl(c, now = Date.now()) {
   return d < 31 ? d + " d" : d < 365 ? (d / 30).toFixed(1).replace(".0", "") + " mo" : (d / 365).toFixed(1) + " y";
 }
 
+/* ---------- Focus ----------
+   The focus is the set of topics that "Today's focus" (the main session, the daily counts and the dorm door)
+   draws from. null means everything. Topic and subject decks can still be studied on their own. */
+const ALL_TOPICS = Object.keys(TOPICS);
+const MATH_TOPICS = ALL_TOPICS.filter(t => t[0] === "M"), PHYS_TOPICS = ALL_TOPICS.filter(t => t[0] === "P");
+function focusTopics() { const f = S.settings.focus; const ok = Array.isArray(f) ? f.filter(t => TOPICS[t]) : []; return ok.length ? ok : ALL_TOPICS; }
+function focusKind() {
+  const f = focusTopics(), has = list => list.every(t => f.includes(t)), none = list => !list.some(t => f.includes(t));
+  if (f.length === ALL_TOPICS.length) return "all";
+  if (has(MATH_TOPICS) && none(PHYS_TOPICS)) return "math";
+  if (has(PHYS_TOPICS) && none(MATH_TOPICS)) return "physics";
+  return "custom";
+}
+function focusName() {
+  const k = focusKind();
+  if (k === "all") return "Everything";
+  if (k !== "custom") return SUBJECT[k];
+  const f = focusTopics();
+  return f.length <= 3 ? f.map(t => TOPICS[t]).join(", ") : f.length + " topics";
+}
+function setFocus(list) { const l = (list || []).filter(t => TOPICS[t]); S.settings.focus = l.length && l.length < ALL_TOPICS.length ? l : null; save(); }
+
 /* ---------- Decks and queues ---------- */
 function inDeck(p, deck) {
-  if (deck === "all") return true;
+  if (deck === "all") return focusTopics().includes(p.topic);
   if (deck === "math" || deck === "physics") return p.subject === deck;
   return p.id.startsWith(deck + "-");
 }
@@ -120,7 +147,7 @@ function deckCounts(deck, now = Date.now()) {
   return { due, nw, learned, total };
 }
 function deckName(deck) {
-  if (deck === "all") return "All topics";
+  if (deck === "all") return "Today's focus: " + focusName();
   if (SUBJECT[deck]) return SUBJECT[deck];
   const [t, s] = deck.split("-");
   return t + (s ? " " + s : "") + " \u00B7 " + TOPICS[t];

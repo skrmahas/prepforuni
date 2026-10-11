@@ -94,6 +94,18 @@ h3 { font-size: 15px; text-transform: uppercase; letter-spacing: .1em; color: va
 .big { font-family: var(--font-display); font-weight: 600; font-size: 44px; line-height: 1; }
 .big-l { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
 .today .btn { margin-left: auto; }
+.focus { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.focus-l { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.seg button { background: none; border: 0; border-right: 1px solid var(--line); padding: 6px 12px; font: inherit; font-size: 13px; color: var(--muted); }
+.seg button:last-child { border-right: 0; }
+.seg button:hover { color: var(--ink); }
+.seg button.on { background: var(--accent); color: var(--accent-ink); }
+.ftopics { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px 16px; width: 100%; margin-top: 4px; }
+.ftopics label { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
+.ftopics .code { font-size: 11px; color: var(--muted); }
+.strip.off { opacity: .5; }
+.strip.off:hover { opacity: .8; }
 .exam-facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 13.5px; margin: 10px 0 0; }
 .exam-facts dt { color: var(--muted); }
 .exam-facts dd { margin: 0; }
@@ -251,6 +263,10 @@ var mjReady = false;
 <script src="problems-physics.js" charset="utf-8"></script>
 <script src="problems-math-2.js" charset="utf-8"></script>
 <script src="problems-physics-2.js" charset="utf-8"></script>
+<script src="problems-math-3.js" charset="utf-8"></script>
+<script src="problems-gen-lib.js" charset="utf-8"></script>
+<script src="problems-math-gen.js" charset="utf-8"></script>
+<script src="problems-physics-gen.js" charset="utf-8"></script>
 <script src="core.js" charset="utf-8"></script>
 <script>
 "use strict";
@@ -290,36 +306,46 @@ function typeset(el) {
   MathJax.typesetPromise([el]).catch(() => {});
 }
 
-function stripHTML(deck, label, sub) {
+function stripHTML(deck, label, sub, off) {
   const k = deckCounts(deck);
   const pct = k.total ? Math.round(100 * k.learned / k.total) : 0;
   const nAvail = Math.min(k.nw, newLeft());
-  return `<button class="strip" data-study="${deck}">
+  return `<button class="strip${off ? " off" : ""}" data-study="${deck}" ${off ? 'title="Not in your focus. You can still study it here."' : ""}>
     <span class="code">${esc(deck.length <= 3 ? deck : deck === "math" ? "M" : "P")}</span>
     <span class="strip-name">${esc(label)}<small>${esc(sub)}</small><span class="meter" title="${pct}% learned"><b style="width:${pct}%"></b></span></span>
     <span class="counts"><span class="due ${k.due ? "" : "zero"}" title="Due now">${k.due}</span><span class="new ${nAvail ? "" : "zero"}" title="New available today">+${nAvail}</span></span>
   </button>`;
 }
+let focusEdit = false;
+function focusHTML() {
+  const kind = focusKind(), f = focusTopics();
+  const b = (key, label) => `<button data-focus="${key}" class="${kind === key || (key === "custom" && focusEdit) ? "on" : ""}" aria-pressed="${kind === key}">${label}</button>`;
+  return `<div class="focus"><span class="focus-l">Focus</span>
+    <div class="seg" role="group" aria-label="Today's focus">${b("all", "Everything")}${b("math", "Maths")}${b("physics", "Physics")}${b("custom", "Pick topics")}</div>
+    ${focusEdit ? `<div class="ftopics">${ALL_TOPICS.map(t => `<label><input type="checkbox" data-ftopic="${t}" ${f.includes(t) ? "checked" : ""}><span class="code mono">${t}</span>${esc(TOPICS[t])}</label>`).join("")}</div>` : ""}
+  </div>`;
+}
 function renderHome() {
-  const k = deckCounts("all");
+  const k = deckCounts("all"), f = focusTopics();
   const days = Math.ceil((EXAM_DATE - startOfDay()) / DAY);
   const subjects = ["math", "physics"].map(s => {
     const topics = Object.keys(TOPICS).filter(t => (t[0] === "M") === (s === "math"));
     return `<section><div class="deck-head"><h3>${SUBJECT[s]}</h3><span class="note mono">due \u00B7 new</span></div><div class="strips">
-      ${stripHTML(s, "All " + SUBJECT[s].toLowerCase(), pool(s).length + " cards, mixed topics")}
-      ${topics.map(t => stripHTML(t, TOPICS[t], pool(t).length + " cards")).join("")}
+      ${stripHTML(s, "All " + SUBJECT[s].toLowerCase(), pool(s).length + " cards, mixed topics", !topics.some(t => f.includes(t)))}
+      ${topics.map(t => stripHTML(t, TOPICS[t], pool(t).length + " cards", !f.includes(t))).join("")}
     </div></section>`;
   }).join("");
   $app.innerHTML = `
     <div class="hero">
       <div class="panel">
-        <h3>Today</h3>
+        <h3>Today${focusKind() === "all" ? "" : " \u00B7 " + esc(focusName())}</h3>
         <div class="today">
           <div><div class="big mono">${k.due}</div><div class="big-l">Due reviews</div></div>
           <div><div class="big mono">${Math.min(k.nw, newLeft())}</div><div class="big-l">New cards</div></div>
           <div><div class="big mono">${S.day.reviewed}</div><div class="big-l">Answered today</div></div>
           <button class="btn primary" data-study="all">Start session</button>
         </div>
+        ${focusHTML()}
       </div>
       <div class="panel">
         <h3>Selection exam</h3>
@@ -341,7 +367,7 @@ function startStudy(deck, cram) {
   go("study");
 }
 function advance() {
-  const p = nextCard(session.deck, session.cur && session.cur.id, session.cram);
+  const p0 = nextCard(session.deck, session.cur && session.cur.id, session.cram), p = p0 && reroll(p0.id);
   session.cur = p ? { id: p.id, perm: shuffle(p.choices.map((_, i) => i)), start: Date.now(), picked: null, ms: 0 } : null;
 }
 function diffHTML(d) { return `<span class="diff" title="Difficulty ${d} of 3">${[1, 2, 3].map(i => `<b class="${i <= d ? "on" : ""}"></b>`).join("")}</span>`; }
@@ -352,6 +378,7 @@ function cardHead(p) {
     <span style="flex:1"></span>
     ${diffHTML(p.difficulty)}
     <span class="pill" title="Style and level follow this source">modelled on ${esc(p.model)}</span>
+    ${p.generated ? '<span class="pill" title="This card rolls new numbers every time it comes up">new numbers each time</span>' : ""}
     ${p.calc ? '<span class="pill" title="A scientific calculator is reasonable here">calculator</span>' : '<span class="pill" title="Intended to be done by hand">by hand</span>'}
   </div>`;
 }
@@ -380,7 +407,7 @@ function renderStudy() {
       <div class="row" style="justify-content:center;margin-top:16px"><button class="btn primary" data-cram="${session.deck}">Practise this deck anyway</button><button class="btn" data-go="home">Back to decks</button></div></div>`;
     return;
   }
-  const p = BY_ID.get(cur.id);
+  const p = prob(cur.id);
   const revealed = cur.picked !== null;
   let after = "";
   if (revealed) {
@@ -420,7 +447,7 @@ function pick(ci) {
   const cur = session.cur;
   if (!cur || cur.picked !== null) return;
   cur.picked = ci; cur.ms = Date.now() - cur.start;
-  const p = BY_ID.get(cur.id), ok = ci === p.answer;
+  const p = prob(cur.id), ok = ci === p.answer;
   const c = Object.assign({}, cs(p.id));
   c.seen = (c.seen || 0) + 1; c.right = (c.right || 0) + (ok ? 1 : 0); c.tsum = (c.tsum || 0) + Math.min(cur.ms, 600000);
   S.cards[p.id] = c;
@@ -446,7 +473,7 @@ function rate(r) {
 /* Exam simulation */
 function startExam(subject) {
   const ids = shuffle(PROBLEMS.filter(p => p.subject === subject).map(p => p.id)).slice(0, 20);
-  exam = { subject, ids, perm: ids.map(id => shuffle(BY_ID.get(id).choices.map((_, i) => i))), ans: ids.map(() => null), spent: ids.map(() => 0), idx: 0, start: Date.now(), seen: Date.now(), limit: 30 * MIN, done: false };
+  exam = { subject, ids, perm: ids.map(id => shuffle(reroll(id).choices.map((_, i) => i))), ans: ids.map(() => null), spent: ids.map(() => 0), idx: 0, start: Date.now(), seen: Date.now(), limit: 30 * MIN, done: false };
   render();
 }
 function examLeft() { return exam.limit - (Date.now() - exam.start); }
@@ -456,11 +483,11 @@ function finishExam() {
   noteSpent();
   exam.done = true;
   exam.end = Date.now();
-  const score = exam.ids.filter((id, i) => exam.ans[i] === BY_ID.get(id).answer).length;
+  const score = exam.ids.filter((id, i) => exam.ans[i] === prob(id).answer).length;
   exam.score = score;
   // Missed cards come back for review now.
   exam.ids.forEach((id, i) => {
-    const p = BY_ID.get(id), ok = exam.ans[i] === p.answer;
+    const p = prob(id), ok = exam.ans[i] === p.answer;
     const c = Object.assign({}, cs(id));
     c.seen = (c.seen || 0) + (exam.ans[i] === null ? 0 : 1); c.right = (c.right || 0) + (ok ? 1 : 0);
     if (exam.ans[i] !== null) c.tsum = (c.tsum || 0) + Math.min(exam.spent[i], 600000);
@@ -495,13 +522,13 @@ function renderExam() {
       </div>
       <p class="note" style="margin-top:12px">There is no penalty for wrong answers in the real exam, so never leave a question blank. Ranking is relative to other applicants, so there is no fixed pass mark.</p>
       <div class="panel" style="margin-top:12px"><h3>Review</h3>${exam.ids.map((id, i) => {
-        const p = BY_ID.get(id), ok = exam.ans[i] === p.answer;
+        const p = prob(id), ok = exam.ans[i] === p.answer;
         return `<details class="rev"><summary><span class="mark ${ok ? "r" : "w"}">${ok ? "\u2713" : "\u2717"}</span><span class="mono note">Q${i + 1}</span><span class="code" style="padding:2px 6px">${p.topic}\u00B7${p.sub}</span><span class="note mono">${Math.round(exam.spent[i] / 1000)} s</span></summary>
           <div style="padding:10px 0 4px"><div class="stem">${p.stem}</div>${p.figure ? `<div class="figure">${p.figure}</div>` : ""}<div class="choices">${choicesHTML(p, exam.perm[i], { reveal: true, picked: exam.ans[i] })}</div><div class="sol"><h3>Worked solution</h3>${relabel(p.solution, exam.perm[i])}</div></div></details>`;
       }).join("")}</div>`;
     return;
   }
-  const i = exam.idx, p = BY_ID.get(exam.ids[i]);
+  const i = exam.idx, p = prob(exam.ids[i]);
   $app.innerHTML = `<div class="bar"><strong>${SUBJECT[exam.subject]} section</strong><span class="note mono">Question ${i + 1} of ${exam.ids.length}</span><span class="grow"></span><span class="exam-clock" id="eclock">${fmtClock(examLeft())}</span></div>
     <div class="qnav">${exam.ids.map((_, k) => `<button class="${exam.ans[k] !== null ? "answered" : ""} ${k === i ? "cur" : ""}" data-q="${k}" aria-label="Question ${k + 1}">${k + 1}</button>`).join("")}</div>
     <div class="card">${cardHead(p)}<div class="card-body"><div class="stem">${p.stem}</div>${p.figure ? `<div class="figure">${p.figure}</div>` : ""}
@@ -616,7 +643,12 @@ $app.addEventListener("click", e => {
   const t = e.target.closest("button, [data-study]");
   if (!t) return;
   const d = t.dataset;
-  if (d.study) startStudy(d.study);
+  if (d.focus) {
+    if (d.focus === "custom") focusEdit = !focusEdit;
+    else { focusEdit = false; setFocus(d.focus === "math" ? MATH_TOPICS : d.focus === "physics" ? PHYS_TOPICS : null); }
+    render();
+  }
+  else if (d.study) startStudy(d.study);
   else if (d.cram) startStudy(d.cram, true);
   else if (d.go) go(d.go);
   else if (d.choice !== undefined) {
@@ -639,7 +671,12 @@ $app.addEventListener("click", e => {
   else if (d.resetCancel !== undefined) { resetArmed = false; render(); }
 });
 $app.addEventListener("change", e => {
-  if (e.target.id === "npd") { S.settings.newPerDay = Math.max(0, Math.min(200, Math.round(+e.target.value || 0))); save(); render(); }
+  if (e.target.dataset.ftopic) {
+    const f = new Set(focusTopics()); e.target.checked ? f.add(e.target.dataset.ftopic) : f.delete(e.target.dataset.ftopic);
+    if (!f.size) { e.target.checked = true; return; }   // keep at least one topic
+    setFocus([...f]); render();
+  }
+  else if (e.target.id === "npd") { S.settings.newPerDay = Math.max(0, Math.min(200, Math.round(+e.target.value || 0))); save(); render(); }
   else if (e.target.id === "hc") { S.settings.hideCalc = e.target.checked; save(); }
   else if (e.target.id === "imp" && e.target.files[0]) { const fr = new FileReader(); fr.onload = () => doImport(fr.result); fr.readAsText(e.target.files[0]); }
 });
@@ -647,7 +684,7 @@ document.addEventListener("keydown", e => {
   if (e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
   const k = e.key.toUpperCase();
   if (view === "study" && session && session.cur) {
-    const p = BY_ID.get(session.cur.id), cur = session.cur;
+    const p = prob(session.cur.id), cur = session.cur;
     if (cur.picked === null) {
       let i = "ABCDE".indexOf(k); if (i < 0 && /^[1-5]$/.test(k)) i = +k - 1;
       if (i >= 0 && i < p.choices.length) { e.preventDefault(); pick(cur.perm[i]); }
@@ -656,7 +693,7 @@ document.addEventListener("keydown", e => {
       else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rate(cur.def || 3); }
     }
   } else if (view === "exam" && exam && !exam.done) {
-    const p = BY_ID.get(exam.ids[exam.idx]);
+    const p = prob(exam.ids[exam.idx]);
     let i = "ABCDE".indexOf(k); if (i < 0 && /^[1-5]$/.test(k)) i = +k - 1;
     if (i >= 0 && i < p.choices.length) { exam.ans[exam.idx] = exam.perm[exam.idx][i]; render(); }
     else if (e.key === "ArrowRight" && exam.idx < exam.ids.length - 1) { noteSpent(); exam.idx++; render(); }
