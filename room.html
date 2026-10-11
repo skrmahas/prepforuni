@@ -809,9 +809,24 @@ const decal = (tex, tint) => new THREE.MeshBasicMaterial({ map: tex, transparent
 // sky, mountains, ground
 oplane(320, 160, new THREE.MeshBasicMaterial({ map: T.desertSky, depthWrite: false }), 130, 30, 0, -Math.PI / 2);
 oplane(240, 52, decal(T.mountains, 1), 95, OG + 22, -10, -Math.PI / 2);
+// sky on the other sides and overhead, so looking back at the dorm or along the alleys isn't a black void
+{ const skyMat = new THREE.MeshBasicMaterial({ map: T.desertSky, depthWrite: false });
+  oplane(320, 160, skyMat, -110, 30, 0, Math.PI / 2);                 // west, behind the dorm
+  oplane(320, 160, skyMat, 10, 30, -130, 0);                          // north
+  oplane(320, 160, skyMat, 10, 30, 130, Math.PI);                     // south
+  oplane(220, 52, decal(T.mountains, 0.92), 10, OG + 22, -95, 0);     // mountains to the north
+  const top = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshBasicMaterial({ color: 0x6b92c6, depthWrite: false }));
+  top.rotation.x = Math.PI / 2; top.position.set(10, 105, 0); outdoor.add(top); }
 { const g = new THREE.PlaneGeometry(70, 90); tileUV(g, [[70, 90]], 2.5); const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: T.sand, color: 0xf2e6d6 })); m.rotation.x = -Math.PI / 2; m.position.set(37, OG, 0); outdoor.add(m); }
 // our own building's facade below and around the window
-{ const g = new THREE.PlaneGeometry(14, 6.4); tileUV(g, [[14, 6.4]], 2); const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: T.sandstone, color: 0x9a9a9a })); m.position.set(X1 + 0.205, OG + 3.2, 0); m.rotation.y = Math.PI / 2; outdoor.add(m); }
+// It has an opening at the dorm window, so from the courtyard you can look up into your own room.
+{
+  const facadeMat = new THREE.MeshBasicMaterial({ map: T.sandstone, color: 0x9a9a9a });
+  const H0 = WY0 - 0.06, H1 = WY1 + 0.06, Z0w = WZ0 - 0.06, Z1w = WZ1 + 0.06, TOPY = OG + 6.4;
+  const piece = (z0, z1, y0, y1) => { const g = new THREE.PlaneGeometry(z1 - z0, y1 - y0); tileUV(g, [[z1 - z0, y1 - y0]], 2); const m = new THREE.Mesh(g, facadeMat); m.position.set(X1 + 0.205, (y0 + y1) / 2, (z0 + z1) / 2); m.rotation.y = Math.PI / 2; outdoor.add(m); };
+  piece(-7, 7, OG, H0); piece(-7, 7, H1, TOPY); piece(-7, Z0w, H0, H1); piece(Z1w, 7, H0, H1);
+  obox(0.26, 0.07, 1.6, T.sandstone, X1 + 0.33, H0 - 0.07, 0, { tint: 0.95 });   // outside sill
+}
 // bomb site A: raised paved platform with a cobbled ramp
 const SITE = { x0: 12, x1: 18, z0: -4.5, z1: 7.5 };
 obox(SITE.x1 - SITE.x0, 1.0, SITE.z1 - SITE.z0, T.sandstone, (SITE.x0 + SITE.x1) / 2, OG, (SITE.z0 + SITE.z1) / 2);
@@ -1849,7 +1864,7 @@ if (coarse) {
 
 /* ================= Keyboard ================= */
 addEventListener("keydown", e => {
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.metaKey || e.altKey || (e.ctrlKey && mode !== "fps")) return;
   const k = e.key.toLowerCase();
   if (e.key === "Escape") { if (!$("m-round").hidden) exitMap(); else if (menuOpen()) dismissMenus(); else if (mode === "board") leaveBoard(); return; }
   if (menuOpen()) {
@@ -1914,7 +1929,7 @@ function buildMapCollision() {
     if (!m.isMesh || m.userData.bot) continue;
     const type = m.geometry.type;
     if (type === "BoxGeometry") { mapHitMeshes.push(m); if (!m.rotation.z) mapSolids.push(new THREE.Box3().setFromObject(m)); }
-    else if (type === "PlaneGeometry" && !m.material.transparent && Math.abs(m.position.x) < 60) mapHitMeshes.push(m);
+    else if (type === "PlaneGeometry" && !m.material.transparent && m.material.depthWrite !== false && Math.abs(m.position.x) < 60) mapHitMeshes.push(m); // not the sky
   }
   mapSolids.push(new THREE.Box3(V3(-3, OG, -7), V3(X1 + 0.25, OG + 8, 7)));   // the dorm building
 }
@@ -1943,36 +1958,56 @@ const WPN = {
 };
 const ME = { x: 0, z: 0, fy: OG, vy: 0, hp: 100, ar: 100, alive: true, wpn: "m4", last: "usp", ammo: {}, nextFire: 0, reloadUntil: 0, drawStart: 0, spray: 0, punch: 0, moving: 0, firedAt: 0, lastShot: 0, triggerHeld: false, shots: 0, hits: 0, kills: 0, hs: 0, dmg: 0, bob: 0, defuse: 0, diedAt: 0, killer: "" };
 let round = null;
-const playerEye = () => V3(ME.x, ME.fy + 1.6, ME.z);
+const eyeH = () => 1.6 - 0.45 * ME.duck - (ME.tucked ? TUCK * 0.75 : 0);
+const playerEye = () => V3(ME.x, ME.fy + eyeH(), ME.z);
 function fpsCamera(now) {
   if (ME.alive) {
-    const pos = V3(ME.x, ME.fy + 1.6 + Math.sin(ME.bob * 2) * 0.012, ME.z);
+    const pos = V3(ME.x, ME.fy + eyeH() + Math.sin(ME.bob * 2) * 0.012, ME.z);
     cam.pos.copy(pos); cam.look.copy(pos.clone().add(dirFrom(player.yaw, player.pitch + ME.punch)));
     return 0;
   }
   const k = ease(Math.min(1, (now - ME.diedAt) / 700));
-  const pos = V3(ME.x, ME.fy + 1.6 - 1.3 * k, ME.z);
+  const pos = V3(ME.x, ME.fy + eyeH() - (eyeH() - 0.3) * k, ME.z);
   cam.pos.copy(pos); cam.look.copy(pos.clone().add(dirFrom(player.yaw, player.pitch * (1 - k) - 0.15 * k)));
   return 1.1 * k;
 }
 // A move is allowed if no wall/crate is in the way and the ground there is at most a small step higher
 // (the ramp is continuous; the 1 m site platform and the ramp's sides are not). Mid-air you can only
 // move over ground that is below your feet, so jumping can't put you inside the platform.
+/* Movement against the courtyard. Boxes (crates, walls, the site) block unless their top is within a small
+   step of your feet; you can stand on any box top. A normal jump clears about 1.1 m (the site), and
+   crouching in mid-air tucks the legs up 0.36 m, which is what gets you onto crates (crouch-jump). */
+const STEP = 0.45, TUCK = 0.36;
+function bodyHeight() { return 1.75 - 0.55 * ME.duck; }
+function supportAt(x, z, feet, tol) {            // highest walkable surface under (x, z) not above feet + tol
+  let g = groundAt(x, z);
+  for (const b of mapSolids) if (x > b.min.x - 0.08 && x < b.max.x + 0.08 && z > b.min.z - 0.08 && z < b.max.z + 0.08 && b.max.y <= feet + tol) g = Math.max(g, b.max.y);
+  return g;
+}
 function canStep(nx, nz) {
-  if (blockedMap(nx, nz, ME.fy)) return false;
-  let g = groundAt(nx, nz);                      // highest ground under the player's body, not just its centre
+  if (nx < 2.7 || nx > 23.5 || nz < -9.1 || nz > 9.5) return false;
+  const airborne = ME.vy !== 0 || ME.fy > supportAt(ME.x, ME.z, ME.fy, STEP) + 0.02, tol = airborne ? 0.02 : STEP, h = bodyHeight();
+  for (const b of mapSolids) if (nx > b.min.x - PR && nx < b.max.x + PR && nz > b.min.z - PR && nz < b.max.z + PR && b.max.y > ME.fy + tol && b.min.y < ME.fy + h) return false;
+  let g = groundAt(nx, nz);                      // terrain (site, ramp) under the whole body, not just its centre
   for (const [ox, oz] of [[PR, 0], [-PR, 0], [0, PR], [0, -PR]]) g = Math.max(g, groundAt(nx + ox, nz + oz));
-  const airborne = ME.vy !== 0 || ME.fy > groundAt(ME.x, ME.z) + 0.02;
-  return airborne ? g <= ME.fy + 0.02 : g - ME.fy <= 0.45;
+  return g <= ME.fy + tol;
 }
 function moveFps(dt) {
   if (!ME.alive || !round || round.phase === "freeze" || menuOpen()) { ME.moving = 0; return; }
+  // crouch: on the ground the view sinks; in the air the legs tuck up instead (crouch-jump)
+  const wantDuck = keys.has("crouch");
+  const support = supportAt(ME.x, ME.z, ME.fy, STEP), inAir = ME.vy !== 0 || ME.fy > support + 0.02;
+  if (wantDuck && !ME.tucked && inAir && !ME.duckedOnGround) { ME.fy += TUCK; ME.tucked = true; }
+  if ((!wantDuck || !inAir) && ME.tucked) { ME.tucked = false; if (inAir) ME.fy = Math.max(supportAt(ME.x, ME.z, ME.fy, 0.02), ME.fy - TUCK); }
+  ME.duckedOnGround = wantDuck && !inAir;
+  ME.duck += ((wantDuck ? 1 : 0) - ME.duck) * (1 - Math.exp(-dt * 14));
   let f = 0, r = 0;
   if (keys.has("w") || keys.has("arrowup")) f += 1;
   if (keys.has("s") || keys.has("arrowdown")) f -= 1;
   if (keys.has("d") || keys.has("arrowright")) r += 1;
   if (keys.has("a") || keys.has("arrowleft")) r -= 1;
-  const speed = keys.has("shift") ? 1.9 : WPN[ME.wpn].speed;
+  let speed = keys.has("shift") ? 1.9 : WPN[ME.wpn].speed;
+  if (wantDuck && !inAir) speed *= 0.34;         // duck-walk, like the game
   const len = Math.hypot(f, r), ox = ME.x, oz = ME.z;
   if (len) {
     f /= len; r /= len;
@@ -1981,12 +2016,15 @@ function moveFps(dt) {
     if (canStep(ME.x + dx, ME.z)) ME.x += dx;
     if (canStep(ME.x, ME.z + dz)) ME.z += dz;
   }
-  const g = groundAt(ME.x, ME.z);
-  if (keys.has(" ") && ME.vy === 0 && ME.fy <= g + 0.01) ME.vy = 3.3;
-  if (ME.vy !== 0 || ME.fy > g + 0.01) { ME.vy -= 9.81 * dt; ME.fy += ME.vy * dt; if (ME.fy <= g) { ME.fy = g; ME.vy = 0; } }
-  else if (g > ME.fy) ME.fy = g;   // walking up the ramp
+  const g = supportAt(ME.x, ME.z, ME.fy, STEP);
+  if (keys.has(" ") && ME.vy === 0 && ME.fy <= g + 0.01) ME.vy = 4.7;   // ~1.1 m jump
+  if (ME.vy !== 0 || ME.fy > g + 0.01) {
+    ME.vy -= 9.81 * dt; ME.fy += ME.vy * dt;
+    const land = supportAt(ME.x, ME.z, ME.fy - ME.vy * dt, 0.02);
+    if (ME.fy <= land) { ME.fy = land; ME.vy = 0; if (ME.tucked) { ME.tucked = false; } }
+  } else if (g > ME.fy) ME.fy = g;   // walking up the ramp
   ME.moving = Math.hypot(ME.x - ox, ME.z - oz) / Math.max(dt, 1e-4);
-  if (ME.moving > 0.3 && ME.vy === 0) ME.bob += dt * (keys.has("shift") ? 5 : 9);
+  if (ME.moving > 0.3 && ME.vy === 0) ME.bob += dt * (keys.has("shift") || wantDuck ? 5 : 9);
 }
 
 /* ---- first-person weapon models ---- */
@@ -2213,7 +2251,7 @@ function shootGun(now) {
   if (a.mag <= 0) { sfxGun.dry(); ME.triggerHeld = true; ME.nextFire = now + 250; if (a.res > 0) reloadWeapon(); return; }
   a.mag--; ME.nextFire = now + w.rate; ME.triggerHeld = true; ME.shots++; ME.firedAt = now; ME.lastShot = now;
   const airborne = ME.fy > groundAt(ME.x, ME.z) + 0.05;
-  const spread = w.spread + w.moveSpread * Math.min(1, ME.moving / 4) + (ME.wpn === "m4" ? Math.min(0.04, ME.spray * 0.0035) : 0) + (airborne ? 0.06 : 0);
+  const spread = (w.spread + w.moveSpread * Math.min(1, ME.moving / 4) + (ME.wpn === "m4" ? Math.min(0.04, ME.spray * 0.0035) : 0)) * (1 - 0.5 * ME.duck) + (airborne ? 0.06 : 0);
   const h = castShot(spread, 140);
   if (h) {
     const t = botOf(h.object);
@@ -2221,7 +2259,7 @@ function shootGun(now) {
     else { const n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld) : V3(0, 1, 0); addDecal(h.point, n); addPuff(h.point.clone().addScaledVector(n, 0.05), 0xc9a26a, 0.3, 450); }
   }
   ME.spray++;
-  ME.punch += ME.wpn === "m4" ? 0.011 + Math.min(0.018, ME.spray * 0.0012) : 0.02;
+  ME.punch += (ME.wpn === "m4" ? 0.011 + Math.min(0.018, ME.spray * 0.0012) : 0.02) * (1 - 0.3 * ME.duck);
   if (ME.wpn === "m4" && ME.spray > 6) player.yaw += (Math.random() - 0.5) * 0.012;
   VM.kick = 1;
   (ME.wpn === "m4" ? sfxGun.m4 : sfxGun.usp)();
@@ -2320,6 +2358,29 @@ function killBot(t, headshot, wname) {
   feed(`<span class="you">You</span><span class="w">${esc(wname)}</span>${headshot ? '<span class="hs">&#9678;</span>' : ""}<span class="t">${esc(b.name)}</span>`);
   if (b.carrier && !round.planted) setTimeout(reassignCarrier, 1500);
 }
+// Ways up onto the site (ground point, top point) and the platform's corners for walking around it.
+const SITE_ENTRIES = [[[11.2, OG, -2.6], [12.6, OTOP, -2.6]], [[18.7, OG, 5.6], [17.4, OTOP, 5.2]], [[18.7, OG, -1.5], [17.4, OTOP, -1.5]]];
+const SITE_CORNERS = [[11.3, OG, -5.2], [18.7, OG, -5.2], [18.7, OG, 8.3], [11.3, OG, 8.3], [6.3, OG, 3.0], [6.3, OG, 8.3]];
+function crossesSite(a, b) {
+  // does the ground segment a-b pass through the platform or the side of the ramp (slightly enlarged)?
+  const rects = [[SITE.x0 - 0.3, SITE.x1 + 0.3, SITE.z0 - 0.3, SITE.z1 + 0.3], [6.7, 12.3, 3.3, 7.8]];
+  for (let i = 1; i < 30; i++) { const u = i / 30, x = a[0] + (b[0] - a[0]) * u, z = a[2] + (b[2] - a[2]) * u; for (const [x0, x1, z0, z1] of rects) if (x > x0 && x < x1 && z > z0 && z < z1) return true; }
+  return false;
+}
+function groundRouteToSite(from) {
+  let best = null, bestLen = Infinity;
+  const len = pts => pts.reduce((s, p, i) => i ? s + Math.hypot(p[0] - pts[i - 1][0], p[2] - pts[i - 1][2]) : 0, 0);
+  for (const [ground, top] of SITE_ENTRIES) {
+    let route = null;
+    if (!crossesSite(from, ground)) route = [from, ground];
+    else for (const c of SITE_CORNERS) { if (!crossesSite(from, c) && !crossesSite(c, ground)) { const r = [from, c, ground]; if (!route || len(r) < len(route)) route = r; } }
+    if (!route) for (const c1 of SITE_CORNERS) for (const c2 of SITE_CORNERS) { if (c1 !== c2 && !crossesSite(from, c1) && !crossesSite(c1, c2) && !crossesSite(c2, ground)) { const r = [from, c1, c2, ground]; if (!route || len(r) < len(route)) route = r; } }
+    if (!route) continue;
+    const full = route.concat([top, PLANT]);
+    if (len(full) < bestLen) { bestLen = len(full); best = full; }
+  }
+  return best || [from, [11.2, OG, -2.6], [12.6, OTOP, -2.6], PLANT];
+}
 function reassignCarrier() {
   if (!round || round.planted || round.phase === "over") return;
   const alive = aliveBots(); if (!alive.length) return;
@@ -2327,7 +2388,7 @@ function reassignCarrier() {
   alive.sort((a, b) => a.position.distanceTo(pv) - b.position.distanceTo(pv));
   const t = alive[0], b = t.userData.bot, p = t.position;
   b.carrier = true; b.state = "move"; b.seg = 0;
-  b.path = p.y > OTOP - 0.3 ? [[p.x, p.y, p.z], PLANT] : [[p.x, p.y, p.z], [11.2, OG, -2.6], [12.6, OTOP, -2.6], PLANT];
+  b.path = p.y > OTOP - 0.3 ? [[p.x, p.y, p.z], PLANT] : groundRouteToSite([p.x, p.y, p.z]);
   chat("Radio", b.name + " picked up the bomb.");
 }
 function botShoot(t, b, eye, pe, dist, now) {
@@ -2337,6 +2398,7 @@ function botShoot(t, b, eye, pe, dist, now) {
   const muzzle = t.userData.rifle.localToWorld(V3(0, 0.02, 0.64));
   let p = Math.max(0.09, Math.min(0.36, 0.46 - dist * 0.016));
   if (ME.moving > 2) p *= 0.65;
+  if (ME.duck > 0.5) p *= 0.8;             // crouching makes you a smaller target
   if (now - b.reactAt < 400) p *= 0.5;
   if (b.moveShot) p *= 0.5;
   if (b.strafeDir) p *= 0.85;
@@ -2425,7 +2487,7 @@ function enterMap() {
   if (bomb) { bomb.ts.forEach(t => outdoor.remove(t)); if (bomb.c4) outdoor.remove(bomb.c4); bomb = null; }
   fadeThen(() => {
     resetCrates(); buildMapCollision(); clearFx();
-    Object.assign(ME, { x: 3.6, z: 6.6, fy: OG, vy: 0, hp: 100, ar: 100, alive: true, wpn: "m4", last: "usp", nextFire: 0, reloadUntil: 0, drawStart: performance.now(), spray: 0, punch: 0, moving: 0, firedAt: 0, lastShot: 0, triggerHeld: false, shots: 0, hits: 0, kills: 0, hs: 0, dmg: 0, defuse: 0, killer: "" });
+    Object.assign(ME, { x: 3.6, z: 6.6, fy: OG, vy: 0, hp: 100, ar: 100, alive: true, wpn: "m4", last: "usp", nextFire: 0, reloadUntil: 0, drawStart: performance.now(), spray: 0, punch: 0, moving: 0, firedAt: 0, lastShot: 0, triggerHeld: false, shots: 0, hits: 0, kills: 0, hs: 0, dmg: 0, defuse: 0, killer: "", duck: 0, tucked: false, duckedOnGround: false });
     ME.ammo = { m4: { mag: 30, res: 90 }, usp: { mag: 12, res: 24 } };
     player.yaw = Math.atan2(-(15 - ME.x), -(0 - ME.z)); player.pitch = 0;
     round = { phase: "freeze", t0: performance.now(), liveAt: 0, bots: [], spawned: 0, planted: 0, c4: null, nextBeep: 0, result: "", reason: "", endAt: 0, cleared: false };
@@ -2524,7 +2586,7 @@ function updateFpsHud(now) {
     $("f-mag").textContent = w.melee ? "-" : a.mag; $("f-res").textContent = w.melee ? "-" : a.res; $("f-wpn").textContent = w.name.toUpperCase();
     $("f-hpw").classList.toggle("warn", ME.hp < 30);
   }
-  const spreadPx = Math.min(60, (w.melee ? 0 : (w.spread + w.moveSpread * Math.min(1, ME.moving / 4) + (ME.wpn === "m4" ? Math.min(0.04, ME.spray * 0.0035) : 0))) * innerHeight * 1.6);
+  const spreadPx = Math.min(60, (w.melee ? 0 : (w.spread + w.moveSpread * Math.min(1, ME.moving / 4) + (ME.wpn === "m4" ? Math.min(0.04, ME.spray * 0.0035) : 0)) * (1 - 0.5 * ME.duck)) * innerHeight * 1.6);
   const xs = Math.round(22 + spreadPx * 2), xh = $("xhair");
   xh.style.width = xh.style.height = xs + "px"; xh.style.margin = (-xs / 2) + "px 0 0 " + (-xs / 2) + "px";
 }
@@ -2568,10 +2630,10 @@ canvas.addEventListener("mousedown", ev => {
 addEventListener("mouseup", ev => { keys.delete(ev.button === 2 ? "mouse2" : "mouse1"); });
 canvas.addEventListener("contextmenu", ev => { if (mode === "fps") ev.preventDefault(); });
 canvas.addEventListener("wheel", ev => { if (mode === "fps" && ME.alive) { cycleWeapon(ev.deltaY > 0 ? 1 : -1); ev.preventDefault(); } }, { passive: false });
-const CODE_KEYS = { KeyW: "w", KeyA: "a", KeyS: "s", KeyD: "d", Space: " ", ShiftLeft: "shift", ShiftRight: "shift", KeyE: "e", KeyF: "mouse1", KeyR: "r", KeyQ: "q", Digit1: "1", Digit2: "2", Digit3: "3" };
+const CODE_KEYS = { ControlLeft: "crouch", ControlRight: "crouch", KeyC: "crouch", KeyW: "w", KeyA: "a", KeyS: "s", KeyD: "d", Space: " ", ShiftLeft: "shift", ShiftRight: "shift", KeyE: "e", KeyF: "mouse1", KeyR: "r", KeyQ: "q", Digit1: "1", Digit2: "2", Digit3: "3" };
 function fpsKey(e, k) {
   k = CODE_KEYS[e.code] || k;
-  if (k === "mouse1") { keys.add(k); e.preventDefault(); return; }
+  if (k === "mouse1" || k === "crouch") { keys.add(k); e.preventDefault(); return; }
   if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", " ", "shift", "e"].includes(k)) { keys.add(k); e.preventDefault(); }
   else if (k === "1") switchWeapon("m4"); else if (k === "2") switchWeapon("usp"); else if (k === "3") switchWeapon("knife");
   else if (k === "q") switchWeapon(ME.last);
